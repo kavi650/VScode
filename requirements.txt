@@ -1,0 +1,60 @@
+# Flask Core Framework
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Mail==0.9.1
+
+# Database
+psycopg2-binary==2.9.7
+
+# Security
+Werkzeug==2.3.7
+
+# Image Processing
+Pillow==10.0.0
+
+# HTTP Requests (for exchange rates)
+requests==2.31.0
+
+# Data Processing
+pandas==2.0.3
+
+# PDF Generation
+reportlab==4.0.4
+
+# Data Visualization
+matplotlib==3.7.2
+
+# JSON Web Tokens (optional for future use)
+PyJWT==2.8.0
+
+# Date and Time Utilities
+python-dateutil==2.8.2
+
+# Environment Variables (recommended)
+python-dotenv==1.0.0
+
+# Development and Testing (optional)
+pytest==7.4.2
+pytest-flask==1.2.0
+
+# Additional utilities
+secrets==1.0.0  # Note: This is built into Python 3.6+
+cryptography==41.0.4
+
+# For better JSON handling
+simplejson==3.19.1
+
+# For better error handling
+click==8.1.7
+
+# Async support (for future enhancements)
+eventlet==0.33.3
+
+# For production deployment
+gunicorn==21.2.0
+
+# Redis for caching (optional)
+redis==4.6.0
+
+# For background tasks (optional)
+celery==5.3.1

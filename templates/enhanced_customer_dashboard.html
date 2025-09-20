@@ -1,0 +1,655 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - E-Bank Enhanced{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Enhanced Welcome Message -->
+    <div class="welcome-message">
+        <div class="welcome-content">
+            <div class="welcome-text">
+                <h2><i class="fas fa-hand-sparkles"></i> Welcome back, {{ user.name }}!</h2>
+                <p>Your enhanced banking experience awaits</p>
+            </div>
+            <div class="balance-preview">
+                <div class="balance-item">
+                    <span class="balance-label">Account Balance</span>
+                    <span class="balance-value">₹{{ "%.2f"|format(user.account_balance) }}</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-label">Wallet Balance</span>
+                    <span class="balance-value wallet">₹{{ "%.2f"|format(user.wallet_balance) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="quick-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ recent_transactions|length }}</h3>
+                <p>Recent Transactions</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ pending_splits or 0 }}</h3>
+                <p>Pending Split Payments</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ user.preferred_currency }}</h3>
+                <p>Preferred Currency</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-shield-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{% if user.email_verified %}Verified{% else %}Pending{% endif %}</h3>
+                <p>Account Status</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Navigation Menu -->
+    <div class="nav-menu enhanced">
+        <a href="{{ url_for('enhanced_operations') }}" class="nav-btn primary">
+            <div class="nav-icon">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Banking Operations</h3>
+                <p>Deposits, withdrawals & transfers</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('enhanced_profile') }}" class="nav-btn">
+            <div class="nav-icon">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Enhanced Profile</h3>
+                <p>Manage account & upload photo</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('enhanced_history') }}" class="nav-btn">
+            <div class="nav-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Transaction History</h3>
+                <p>View transactions & analytics</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('scan_and_pay') }}" class="nav-btn accent">
+            <div class="nav-icon">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Scan & Pay</h3>
+                <p>QR code payments</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('split_payments') }}" class="nav-btn success">
+            <div class="nav-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Split Payments</h3>
+                <p>Share expenses with friends</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('international_transactions') }}" class="nav-btn warning">
+            <div class="nav-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="nav-content">
+                <h3>International</h3>
+                <p>Global transfers & currency</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('enhanced_chatbot') }}" class="nav-btn info">
+            <div class="nav-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Smart Assistant</h3>
+                <p>AI-powered banking help</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('enhanced_budgeting') }}" class="nav-btn purple">
+            <div class="nav-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="nav-content">
+                <h3>Budgeting Tool</h3>
+                <p>Financial insights & planning</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="recent-transactions">
+        <div class="section-header">
+            <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+            <a href="{{ url_for('enhanced_history') }}" class="view-all-btn">
+                <i class="fas fa-arrow-right"></i> View All
+            </a>
+        </div>
+        
+        {% if recent_transactions %}
+        <div class="transactions-list">
+            {% for transaction in recent_transactions %}
+            <div class="transaction-item">
+                <div class="transaction-icon">
+                    {% if transaction.transaction_type == 'deposit' %}
+                        <i class="fas fa-arrow-down" style="color: var(--success);"></i>
+                    {% elif transaction.transaction_type == 'withdraw' %}
+                        <i class="fas fa-arrow-up" style="color: var(--warning);"></i>
+                    {% elif transaction.transaction_type == 'transfer' %}
+                        <i class="fas fa-exchange-alt" style="color: var(--primary-light);"></i>
+                    {% elif transaction.transaction_type == 'split_payment' %}
+                        <i class="fas fa-users" style="color: var(--info);"></i>
+                    {% else %}
+                        <i class="fas fa-globe" style="color: var(--purple);"></i>
+                    {% endif %}
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-title">
+                        {{ transaction.transaction_type.replace('_', ' ').title() }}
+                    </div>
+                    <div class="transaction-desc">
+                        {{ transaction.details[:50] }}{% if transaction.details and transaction.details|length > 50 %}...{% endif %}
+                    </div>
+                    <div class="transaction-time">
+                        {{ transaction.timestamp.strftime('%d %b, %H:%M') }}
+                    </div>
+                </div>
+                <div class="transaction-amount">
+                    <span class="amount {% if transaction.amount > 0 %}positive{% else %}negative{% endif %}">
+                        {% if transaction.amount > 0 %}+{% endif %}₹{{ "%.2f"|format(transaction.amount) }}
+                    </span>
+                    {% if transaction.currency != 'INR' %}
+                    <span class="currency">{{ transaction.currency }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-transactions">
+            <i class="fas fa-inbox"></i>
+            <h4>No Recent Transactions</h4>
+            <p>Start using your enhanced banking features to see activity here.</p>
+            <a href="{{ url_for('enhanced_operations') }}" class="btn">
+                <i class="fas fa-plus"></i> Make Your First Transaction
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-enhanced">
+        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+        <div class="actions-grid">
+            <button class="action-btn" onclick="quickDeposit()">
+                <i class="fas fa-plus"></i>
+                <span>Quick Deposit</span>
+            </button>
+            <button class="action-btn" onclick="quickTransfer()">
+                <i class="fas fa-paper-plane"></i>
+                <span>Quick Transfer</span>
+            </button>
+            <button class="action-btn" onclick="scanPay()">
+                <i class="fas fa-qrcode"></i>
+                <span>Scan & Pay</span>
+            </button>
+            <button class="action-btn" onclick="generateQR()">
+                <i class="fas fa-qrcode"></i>
+                <span>Generate QR</span>
+            </button>
+            <button class="action-btn" onclick="viewBudget()">
+                <i class="fas fa-chart-pie"></i>
+                <span>Budget Tool</span>
+            </button>
+            <button class="action-btn" onclick="askAssistant()">
+                <i class="fas fa-robot"></i>
+                <span>Ask Assistant</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.welcome-message {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    color: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-hover);
+}
+
+.welcome-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.welcome-text h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.welcome-text p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.balance-preview {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.balance-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.balance-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.balance-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.balance-value.wallet {
+    color: #ffd700;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+}
+
+.stat-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.nav-menu.enhanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.nav-btn {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    padding: 2rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    border-left: 4px solid var(--primary-light);
+}
+
+.nav-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.nav-btn.primary { border-left-color: var(--primary-dark); }
+.nav-btn.success { border-left-color: var(--success); }
+.nav-btn.warning { border-left-color: var(--warning); }
+.nav-btn.info { border-left-color: #17a2b8; }
+.nav-btn.accent { border-left-color: #6f42c1; }
+.nav-btn.purple { border-left-color: #9b59b6; }
+
+.nav-icon {
+    width: 60px;
+    height: 60px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+    flex-shrink: 0;
+}
+
+.nav-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-dark);
+    font-size: 1.2rem;
+}
+
+.nav-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.recent-transactions {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.view-all-btn {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.view-all-btn:hover {
+    transform: translateX(5px);
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.transaction-icon {
+    width: 45px;
+    height: 45px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.transaction-details {
+    flex: 1;
+}
+
+.transaction-title {
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 0.25rem;
+}
+
+.transaction-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.transaction-time {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.transaction-amount {
+    text-align: right;
+}
+
+.amount {
+    font-weight: bold;
+    font-size: 1.1rem;
+    display: block;
+}
+
+.amount.positive {
+    color: var(--success);
+}
+
+.amount.negative {
+    color: var(--danger);
+}
+
+.currency {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.empty-transactions {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.empty-transactions i {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.quick-actions-enhanced {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.quick-actions-enhanced h3 {
+    margin: 0 0 2rem 0;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    border: 2px solid var(--primary-light);
+    color: var(--primary-dark);
+    padding: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.action-btn:hover {
+    background: var(--primary-light);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+}
+
+.action-btn i {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .welcome-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .nav-menu.enhanced {
+        grid-template-columns: 1fr;
+    }
+    
+    .nav-btn {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .quick-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+}
+</style>
+
+<script>
+// Quick action functions
+function quickDeposit() {
+    window.location.href = '{{ url_for("enhanced_operations") }}?tab=deposit';
+}
+
+function quickTransfer() {
+    window.location.href = '{{ url_for("enhanced_operations") }}?tab=transfer';
+}
+
+function scanPay() {
+    window.location.href = '{{ url_for("scan_and_pay") }}';
+}
+
+function generateQR() {
+    window.location.href = '{{ url_for("generate_qr") }}';
+}
+
+function viewBudget() {
+    window.location.href = '{{ url_for("enhanced_budgeting") }}';
+}
+
+function askAssistant() {
+    window.location.href = '{{ url_for("enhanced_chatbot") }}';
+}
+
+// Add subtle animations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stat-card, .nav-btn, .transaction-item');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.animation = `fadeInUp 0.5s ease forwards ${index * 0.1}s`;
+    });
+    
+    // Add CSS for animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

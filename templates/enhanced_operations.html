@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Operations - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="page-title" style="margin-bottom: 0;">
+            <i class="fas fa-exchange-alt"></i> Banking Operations
+        </h1>
+        <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    {% if message %}
+    <div class="{% if 'Successfully' in message %}success-message{% else %}error-message{% endif %}">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Operation Buttons -->
+    <div class="operations-buttons">
+        <button class="btn btn-blue-light operation-btn" data-tab="deposit">
+            <i class="fas fa-plus"></i> Deposit
+        </button>
+        <button class="btn btn-blue-dark operation-btn" data-tab="withdraw">
+            <i class="fas fa-minus"></i> Withdraw to Wallet
+        </button>
+        <button class="btn btn-blue-info operation-btn" data-tab="transfer">
+            <i class="fas fa-paper-plane"></i> Transfer
+        </button>
+    </div>
+
+    <!-- Deposit Tab -->
+    <div class="tab-content active" id="deposit">
+        <div class="dashboard-card">
+            <h3><i class="fas fa-plus"></i> Deposit Money</h3>
+            <form method="POST">
+                <input type="hidden" name="operation" value="deposit">
+                <div class="form-group">
+                    <label for="deposit-amount">
+                        ₹ Amount to Deposit
+                    </label>
+                    <input type="number" id="deposit-amount" name="amount" class="form-control" 
+                           min="0.01" step="0.01" placeholder="Enter amount" required>
+                </div>
+                <div class="form-group">
+                    <label for="deposit-pin">
+                        <i class="fas fa-lock"></i> Enter PIN
+                    </label>
+                    <input type="password" id="deposit-pin" name="pin" class="form-control" 
+                           pattern="[0-9]{4}" maxlength="4" placeholder="Enter 4-digit PIN" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="fas fa-plus-circle"></i> Deposit Money
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Withdraw Tab -->
+    <div class="tab-content" id="withdraw">
+        <div class="dashboard-card">
+            <h3><i class="fas fa-minus"></i> Withdraw to Wallet</h3>
+            <form method="POST">
+                <input type="hidden" name="operation" value="withdraw">
+                <div class="form-group">
+                    <label for="withdraw-amount">
+                        ₹ Amount to Withdraw
+                    </label>
+                    <input type="number" id="withdraw-amount" name="amount" class="form-control" 
+                           min="0.01" step="0.01" placeholder="Enter amount" required>
+                    <small style="color: var(--text-dark); opacity: 0.7; font-size: 0.875rem; margin-top: 0.25rem; display: block;">Money will be added to your wallet for QR payments</small>
+                </div>
+                <div class="form-group">
+                    <label for="withdraw-pin">
+                        <i class="fas fa-lock"></i> Enter PIN
+                    </label>
+                    <input type="password" id="withdraw-pin" name="pin" class="form-control" 
+                           pattern="[0-9]{4}" maxlength="4" placeholder="Enter 4-digit PIN" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="fas fa-arrow-up"></i> Withdraw to Wallet
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfer Tab -->
+    <div class="tab-content" id="transfer">
+        <div class="dashboard-card">
+            <h3><i class="fas fa-paper-plane"></i> Transfer Money</h3>
+            <form method="POST">
+                <input type="hidden" name="operation" value="transfer">
+                <div class="form-group">
+                    <label for="transfer-account">
+                        <i class="fas fa-user"></i> Recipient Account Number
+                    </label>
+                    <input type="text" id="transfer-account" name="to_account" class="form-control" 
+                           pattern="[0-9]{8}" placeholder="Enter 8-digit account number" required>
+                </div>
+                <div class="form-group">
+                    <label for="transfer-amount">
+                        ₹ Amount to Transfer
+                    </label>
+                    <input type="number" id="transfer-amount" name="amount" class="form-control" 
+                           min="0.01" step="0.01" placeholder="Enter amount" required>
+                </div>
+                <div class="form-group">
+                    <label for="transfer-pin">
+                        <i class="fas fa-lock"></i> Enter PIN
+                    </label>
+                    <input type="password" id="transfer-pin" name="pin" class="form-control" 
+                           pattern="[0-9]{4}" maxlength="4" placeholder="Enter 4-digit PIN" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Send Transfer
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.operation-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Function to activate a tab
+    function activateTab(tabName) {
+        // Remove active classes
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Add active classes
+        const targetButton = document.querySelector(`[data-tab="${tabName}"]`);
+        const targetContent = document.getElementById(tabName);
+        
+        if (targetButton && targetContent) {
+            targetButton.classList.add('active');
+            targetContent.classList.add('active');
+        }
+    }
+    
+    // Check URL parameters for tab selection
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    if (tabParam && ['deposit', 'withdraw', 'transfer'].includes(tabParam)) {
+        activateTab(tabParam);
+    } else {
+        // Default to deposit tab
+        activateTab('deposit');
+    }
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            activateTab(targetTab);
+        });
+    });
+
+    // Validate account number input
+    document.getElementById('transfer-account').addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+});
+</script>
+{% endblock %}

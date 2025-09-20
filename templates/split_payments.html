@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+
+{% block title %}Split Payments - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="page-title" style="margin-bottom: 0;">
+            <i class="fas fa-users"></i> Split Payments
+        </h1>
+        <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Wallet Balance Display -->
+    <div class="wallet-balance">
+        <div class="balance-card">
+            <h3><i class="fas fa-wallet"></i> Available Wallet Balance</h3>
+            <div class="amount">₹{{ "%.2f"|format(user.wallet_balance) }}</div>
+            <p>Available for Split Payments</p>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {% if category == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                    <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Create Split Payment -->
+    <div class="split-section">
+        <h3><i class="fas fa-plus-circle"></i> Create Split Payment</h3>
+        <form method="POST" action="{{ url_for('create_split_payment') }}" class="split-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="currency">Currency</label>
+                    <select id="currency" name="currency" class="form-control">
+                        <option value="INR">INR - Indian Rupee</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" name="description" class="form-control" 
+                       placeholder="e.g., Dinner at restaurant, Movie tickets, etc." required>
+            </div>
+            
+            <div class="form-group">
+                <label for="participants">Participants (Account Numbers)</label>
+                <textarea id="participants" name="participants" class="form-control" rows="3" 
+                          placeholder="Enter account numbers separated by commas (e.g., 12345678, 87654321)"></textarea>
+                <small>You will be automatically included as a participant</small>
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%;">
+                <i class="fas fa-users"></i> Create Split Payment
+            </button>
+        </form>
+    </div>
+
+    <!-- My Organized Splits -->
+    <div class="splits-section">
+        <h3><i class="fas fa-clipboard-list"></i> My Organized Splits</h3>
+        {% if organized_splits %}
+        <div class="splits-grid">
+            {% for split in organized_splits %}
+            <div class="split-card organized">
+                <div class="split-header">
+                    <h4>{{ split.description }}</h4>
+                    <span class="split-status status-{{ split.status }}">{{ split.status.title() }}</span>
+                </div>
+                <div class="split-details">
+                    <p><strong>Group ID:</strong> {{ split.group_id }}</p>
+                    <p><strong>Total:</strong> {{ split.total_amount }} {{ split.currency }}</p>
+                    <p><strong>Per Person:</strong> {{ "%.2f"|format(split.individual_amount) }} {{ split.currency }}</p>
+                    <p><strong>Participants:</strong> {{ split.participants|length }}</p>
+                    <p><strong>Paid:</strong> {{ (split.paid_by or [])|length }}/{{ split.participants|length }}</p>
+                </div>
+                <div class="split-actions">
+                    <button onclick="showQRCode('{{ split.group_id }}')" class="btn btn-sm">
+                        <i class="fas fa-qrcode"></i> Show QR
+                    </button>
+                    <button onclick="copyGroupId('{{ split.group_id }}')" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-copy"></i> Copy ID
+                    </button>
+                </div>
+                
+                <!-- Payment Progress -->
+                <div class="payment-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ ((split.paid_by or [])|length / split.participants|length * 100)|round }}%"></div>
+                    </div>
+                    <small>{{ ((split.paid_by or [])|length / split.participants|length * 100)|round }}% completed</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users-slash" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+            <p>You haven't organized any split payments yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Splits I Need to Pay -->
+    <div class="splits-section">
+        <h3><i class="fas fa-credit-card"></i> Splits I Need to Pay</h3>
+        {% if participant_splits %}
+        <div class="splits-grid">
+            {% for split in participant_splits %}
+            {% if user.account_number not in (split.paid_by or []) %}
+            <div class="split-card participant">
+                <div class="split-header">
+                    <h4>{{ split.description }}</h4>
+                    <span class="split-amount">₹{{ "%.2f"|format(split.individual_amount) }}</span>
+                </div>
+                <div class="split-details">
+                    <p><strong>Organized by:</strong> {{ split.organizer_account }}</p>
+                    <p><strong>Group ID:</strong> {{ split.group_id }}</p>
+                    <p><strong>Your Share:</strong> {{ "%.2f"|format(split.individual_amount) }} {{ split.currency }}</p>
+                </div>
+                <div class="split-actions">
+                    <a href="{{ url_for('pay_split', group_id=split.group_id) }}" class="btn">
+                        <i class="fas fa-credit-card"></i> Pay Now
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;"></i>
+            <p>All caught up! No pending split payments.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-qrcode"></i> Split Payment QR Code</h3>
+                <button class="modal-close" onclick="closeQRModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="qr-container" class="qr-display"></div>
+                <div class="qr-info">
+                    <p><strong>Share this QR code with participants</strong></p>
+                    <p id="group-id-display"></p>
+                    <div class="qr-actions">
+                        <button onclick="downloadQR()" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button onclick="shareQR()" class="btn btn-secondary">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.wallet-balance {
+    margin-bottom: 2rem;
+}
+
+.balance-card {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: var(--shadow-hover);
+}
+
+.balance-card .amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+.split-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.split-section h3 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.splits-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.splits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.split-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.split-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.split-card.organized {
+    border-color: var(--primary-light);
+    background: linear-gradient(135deg, #f8f9ff, #ffffff);
+}
+
+.split-card.participant {
+    border-color: var(--warning);
+    background: linear-gradient(135deg, #fffbf0, #ffffff);
+}
+
+.split-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.split-header h4 {
+    margin: 0;
+    color: var(--primary-dark);
+}
+
+.split-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.split-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary-dark);
+}
+
+.split-details p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.split-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.payment-progress {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary-light));
+    transition: width 0.3s ease;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.qr-display {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.qr-info {
+    text-align: center;
+}
+
+.qr-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .splits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .split-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+function showQRCode(groupId) {
+    // Create QR code data
+    const qrData = `EBANK_SPLIT:${groupId}`;
+    
+    // Generate QR code
+    const qrContainer = document.getElementById('qr-container');
+    qrContainer.innerHTML = '';
+    
+    try {
+        const qr = qrcode(0, 'M');
+        qr.addData(qrData);
+        qr.make();
+        
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 256;
+        const moduleSize = size / qr.getModuleCount();
+        
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.border = '2px solid #ddd';
+        canvas.style.borderRadius = '10px';
+        
+        // Fill background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Draw QR code
+        ctx.fillStyle = '#2c3e50';
+        for (let row = 0; row < qr.getModuleCount(); row++) {
+            for (let col = 0; col < qr.getModuleCount(); col++) {
+                if (qr.isDark(row, col)) {
+                    ctx.fillRect(col * moduleSize, row * moduleSize, moduleSize, moduleSize);
+                }
+            }
+        }
+        
+        qrContainer.appendChild(canvas);
+        document.getElementById('group-id-display').innerHTML = `<strong>Group ID:</strong> ${groupId}`;
+        document.getElementById('qrModal').style.display = 'flex';
+        
+    } catch (error) {
+        console.error('QR Code generation failed:', error);
+        qrContainer.innerHTML = '<p style="color: red;">QR Code generation failed.</p>';
+    }
+}
+
+function closeQRModal() {
+    document.getElementById('qrModal').style.display = 'none';
+}
+
+function copyGroupId(groupId) {
+    navigator.clipboard.writeText(groupId).then(() => {
+        // Show temporary success message
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.style.background = 'var(--success)';
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = '';
+        }, 2000);
+    });
+}
+
+function downloadQR() {
+    const canvas = document.querySelector('#qr-container canvas');
+    if (canvas) {
+        const link = document.createElement('a');
+        link.download = `split-payment-qr-${Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+}
+
+function shareQR() {
+    const groupId = document.getElementById('group-id-display').textContent.replace('Group ID: ', '');
+    if (navigator.share) {
+        navigator.share({
+            title: 'Split Payment',
+            text: `Join my split payment with Group ID: ${groupId}`,
+        });
+    } else {
+        copyGroupId(groupId);
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('qrModal');
+    if (event.target === modal) {
+        closeQRModal();
+    }
+});
+
+// Input validation
+document.getElementById('participants').addEventListener('input', function() {
+    const participants = this.value.split(',').filter(p => p.trim());
+    const count = participants.length + 1; // +1 for organizer
+    const totalAmount = parseFloat(document.getElementById('total_amount').value) || 0;
+    
+    if (totalAmount > 0 && count > 0) {
+        const perPerson = totalAmount / count;
+        const preview = document.getElementById('amount-preview');
+        if (!preview) {
+            const previewDiv = document.createElement('div');
+            previewDiv.id = 'amount-preview';
+            previewDiv.style.marginTop = '0.5rem';
+            previewDiv.style.fontSize = '0.9rem';
+            previewDiv.style.color = 'var(--primary-dark)';
+            this.parentNode.appendChild(previewDiv);
+        }
+        document.getElementById('amount-preview').innerHTML = 
+            `<i class="fas fa-calculator"></i> ${count} participants • ₹${perPerson.toFixed(2)} per person`;
+    }
+});
+
+document.getElementById('total_amount').addEventListener('input', function() {
+    // Trigger participants calculation
+    document.getElementById('participants').dispatchEvent(new Event('input'));
+});
+</script>
+{% endblock %}

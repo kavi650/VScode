@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Generate QR Code - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="page-header">
+            <h2><i class="fas fa-qrcode"></i> Generate Payment QR Code</h2>
+            <p>Create QR codes for others to scan and pay you</p>
+        </div>
+        <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- QR Generator Form -->
+    <div class="generator-section">
+        <div class="generator-container">
+            <h3><i class="fas fa-plus-circle"></i> Create Payment Request</h3>
+            
+            <form id="qrForm">
+                <div class="form-group">
+                    <label for="amount">Request Amount (₹):</label>
+                    <input type="number" 
+                           id="amount" 
+                           name="amount" 
+                           step="0.01" 
+                           min="0.01" 
+                           placeholder="0.00"
+                           class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <input type="text" 
+                           id="description" 
+                           name="description" 
+                           placeholder="Payment for goods/services"
+                           class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" onclick="generateQR()" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Generate QR Code
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Generated QR Code Display -->
+    <div id="qr-display" class="qr-display" style="display: none;">
+        <h3><i class="fas fa-qrcode"></i> Your Payment QR Code</h3>
+        
+        <div class="qr-container">
+            <div id="qrcode"></div>
+        </div>
+        
+        <div class="qr-details">
+            <p><strong>Account Number:</strong> {{ user.account_number }}</p>
+            <p><strong>Amount:</strong> ₹<span id="display-amount">0.00</span></p>
+            <p><strong>Description:</strong> <span id="display-description">Payment Request</span></p>
+            <p><strong>QR Data:</strong> <code id="qr-data-text">{{ user.account_number }}:0:Payment Request</code></p>
+        </div>
+        
+        <div class="qr-actions">
+            <button onclick="downloadQR()" class="btn btn-success">
+                <i class="fas fa-download"></i> Download QR Code
+            </button>
+            <button onclick="shareQR()" class="btn btn-info">
+                <i class="fas fa-share"></i> Share QR Code
+            </button>
+            <button onclick="printQR()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Print QR Code
+            </button>
+        </div>
+        
+    </div>
+
+</div>
+
+<style>
+.generator-section, .qr-display, .samples-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.generator-container h3 {
+    color: var(--primary-dark);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.qr-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.qr-details {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.qr-details p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.qr-details code {
+    background: #e9ecef;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.qr-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+
+.sample-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+
+.navigation-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+}
+
+
+@media (max-width: 768px) {
+    .qr-actions {
+        flex-direction: column;
+    }
+    
+    .qr-actions .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+function generateQR() {
+    const amount = document.getElementById('amount').value;
+    const description = document.getElementById('description').value || 'Payment Request';
+    
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid amount.');
+        return;
+    }
+    
+    generateQRWithData(amount, description);
+}
+
+function generateSampleQR(amount, description) {
+    document.getElementById('amount').value = amount;
+    document.getElementById('description').value = description;
+    generateQRWithData(amount, description);
+}
+
+function generateQRWithData(amount, description) {
+    const qrData = `{{ user.account_number }}:${amount}:${description}`;
+    
+    console.log('Generating QR for data:', qrData);
+    
+    // Update display
+    document.getElementById('display-amount').textContent = parseFloat(amount).toFixed(2);
+    document.getElementById('display-description').textContent = description;
+    document.getElementById('qr-data-text').textContent = qrData;
+    
+    // Generate QR code using qrcode-generator library
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = ''; // Clear previous QR code
+    
+    try {
+        // Create QR code
+        const qr = qrcode(0, 'M');
+        qr.addData(qrData);
+        qr.make();
+        
+        // Create canvas element
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 256;
+        const moduleSize = size / qr.getModuleCount();
+        
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.border = '2px solid #ddd';
+        canvas.style.borderRadius = '10px';
+        
+        // Fill background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        
+        // Draw QR code
+        ctx.fillStyle = '#2c3e50';
+        for (let row = 0; row < qr.getModuleCount(); row++) {
+            for (let col = 0; col < qr.getModuleCount(); col++) {
+                if (qr.isDark(row, col)) {
+                    ctx.fillRect(col * moduleSize, row * moduleSize, moduleSize, moduleSize);
+                }
+            }
+        }
+        
+        qrContainer.appendChild(canvas);
+        document.getElementById('qr-display').style.display = 'block';
+        
+        console.log('QR code generated successfully');
+        
+    } catch (error) {
+        console.error('QR Code generation failed:', error);
+        qrContainer.innerHTML = '<p style="color: red; text-align: center;">QR Code generation failed. Please try again.</p>';
+    }
+}
+
+function downloadQR() {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (canvas) {
+        const link = document.createElement('a');
+        link.download = `payment-qr-${Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+}
+
+function shareQR() {
+    const qrData = document.getElementById('qr-data-text').textContent;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Payment QR Code',
+            text: `Pay me using this QR code: ${qrData}`,
+        });
+    } else {
+        // Fallback - copy to clipboard
+        navigator.clipboard.writeText(qrData).then(() => {
+            alert('QR data copied to clipboard!');
+        });
+    }
+}
+
+function printQR() {
+    const qrContainer = document.getElementById('qr-display');
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Payment QR Code</title>
+                <style>
+                    body { text-align: center; font-family: Arial, sans-serif; }
+                    .qr-print { margin: 2rem; }
+                    canvas { border: 2px solid #333; }
+                </style>
+            </head>
+            <body>
+                <div class="qr-print">
+                    <h2>E-Bank Payment QR Code</h2>
+                    <p>Account: {{ user.account_number }}</p>
+                    <p>Amount: ₹${document.getElementById('display-amount').textContent}</p>
+                    <p>Description: ${document.getElementById('display-description').textContent}</p>
+                    ${document.getElementById('qrcode').innerHTML}
+                </div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Auto-generate QR if parameters are provided
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = urlParams.get('amount');
+    const description = urlParams.get('description');
+    
+    if (amount && amount > 0) {
+        document.getElementById('amount').value = amount;
+        if (description) {
+            document.getElementById('description').value = description;
+        }
+        generateQRWithData(amount, description || 'Payment Request');
+    }
+});
+</script>
+{% endblock %}

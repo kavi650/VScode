@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction History - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="page-title" style="margin-bottom: 0;">
+            <i class="fas fa-history"></i> Transaction History
+        </h1>
+        <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Download Statements Section -->
+    <div class="dashboard-card">
+        <h3><i class="fas fa-download"></i> Download Statements</h3>
+        <p>Generate and download your account statements in PDF format</p>
+        <div class="download-buttons">
+            <a href="{{ url_for('download_statement', statement_type='weekly') }}" class="btn btn-success">
+                <i class="fas fa-file-pdf"></i> Weekly Report
+            </a>
+            <a href="{{ url_for('download_statement', statement_type='monthly') }}" class="btn btn-success">
+                <i class="fas fa-file-pdf"></i> Monthly Report
+            </a>
+            <a href="{{ url_for('download_statement', statement_type='yearly') }}" class="btn btn-success">
+                <i class="fas fa-file-pdf"></i> Yearly Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Transaction History Table -->
+    <div class="table-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3><i class="fas fa-list"></i> Recent Transactions</h3>
+            <div class="table-info">
+                Total Transactions: <strong>{{ transactions|length }}</strong>
+            </div>
+        </div>
+
+        {% if transactions %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-calendar"></i> Date</th>
+                    <th><i class="fas fa-tag"></i> Type</th>
+                    <th><i class="fas fa-rupee-sign"></i> Amount</th>
+                    <th><i class="fas fa-info-circle"></i> Details</th>
+                    <th><i class="fas fa-balance-scale"></i> Balance After</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr class="transaction-row" data-type="{{ transaction.transaction_type }}">
+                    <td>{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <span class="transaction-badge badge-{{ transaction.transaction_type }}">
+                            {% if transaction.transaction_type == 'deposit' %}
+                                <i class="fas fa-arrow-down"></i> Deposit
+                            {% elif transaction.transaction_type == 'withdraw' %}
+                                <i class="fas fa-arrow-up"></i> Withdraw
+                            {% else %}
+                                <i class="fas fa-exchange-alt"></i> Transfer
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="amount-cell">
+                        <span class="amount {% if transaction.amount > 0 %}positive{% else %}negative{% endif %}">
+                            {% if transaction.amount > 0 %}+{% endif %}₹{{ "%.2f"|format(transaction.amount) }}
+                        </span>
+                    </td>
+                    <td>{{ transaction.details or '-' }}</td>
+                    <td>₹{{ "%.2f"|format(transaction.balance_after) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
+            <h3>No Transactions Yet</h3>
+            <p>Your transaction history will appear here once you start using your account.</p>
+            <a href="{{ url_for('enhanced_operations') }}" class="btn">
+                <i class="fas fa-plus"></i> Make Your First Transaction
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Transaction Summary -->
+    {% if transactions %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>Total Deposits</h4>
+            <div class="stat-value text-success">
+                ₹{{ "%.2f"|format(transactions|selectattr('transaction_type', 'equalto', 'deposit')|map(attribute='amount')|sum) }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <h4>Total Withdrawals</h4>
+            <div class="stat-value" style="color: #ffc107;">
+                ₹{{ "%.2f"|format(transactions|selectattr('transaction_type', 'equalto', 'withdraw')|map(attribute='amount')|sum) }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <h4>Total Transfers</h4>
+            <div class="stat-value text-primary">
+                ₹{{ "%.2f"|format(transactions|selectattr('transaction_type', 'equalto', 'transfer')|map(attribute='amount')|map('abs')|sum) }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <h4>This Month</h4>
+            <div class="stat-value" id="monthly-transactions">
+                {{ transactions|length }} transactions
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.download-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.download-buttons .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+.transaction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-deposit {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.badge-withdraw {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.badge-transfer {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.amount-cell {
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+.amount.positive {
+    color: var(--success);
+}
+
+.amount.negative {
+    color: var(--danger);
+}
+
+.transaction-row {
+    transition: all 0.2s ease;
+}
+
+.transaction-row:hover {
+    background: rgba(0,173,219,0.05);
+    transform: scale(1.01);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
+.empty-state h3 {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.table-info {
+    color: var(--primary-dark);
+    font-weight: 500;
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+.text-primary {
+    color: var(--primary-dark) !important;
+}
+
+@media (max-width: 768px) {
+    .download-buttons {
+        flex-direction: column;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .table {
+        min-width: 600px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation to transaction rows
+    const rows = document.querySelectorAll('.transaction-row');
+    rows.forEach((row, index) => {
+        row.style.animationDelay = `${index * 0.1}s`;
+        row.classList.add('slide-up');
+    });
+
+    // Add click effect to download buttons
+    const downloadButtons = document.querySelectorAll('.download-buttons .btn');
+    downloadButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            this.disabled = true;
+            
+            // Reset after 3 seconds
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }, 3000);
+        });
+    });
+
+    // Highlight recent transactions (last 24 hours)
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    
+    rows.forEach(row => {
+        const dateCell = row.querySelector('td:first-child');
+        const dateText = dateCell.textContent.trim();
+        const transactionDate = new Date(dateText);
+        
+        if (transactionDate > oneDayAgo) {
+            row.style.borderLeft = '4px solid var(--primary-light)';
+            row.style.backgroundColor = 'rgba(0,173,219,0.02)';
+        }
+    });
+});
+</script>
+{% endblock %}

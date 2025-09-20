@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Reports - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="page-title" style="margin-bottom: 0;">
+            <i class="fas fa-file-alt"></i> Transaction Reports
+        </h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="table-container">
+        <h3><i class="fas fa-filter"></i> Generate Report</h3>
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="form-group">
+                    <label>Account Number (Optional)</label>
+                    <input type="text" name="account_number" class="form-control" 
+                           placeholder="Enter account number" pattern="[0-9]{8}">
+                </div>
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" name="from_date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" name="to_date" class="form-control">
+                </div>
+                <div class="form-group" style="display: flex; align-items: end;">
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-search"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if transactions %}
+    <div class="table-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3><i class="fas fa-list"></i> Transaction Report ({{ transactions|length }} records)</h3>
+            <div>
+                <a href="{{ url_for('download_statement', statement_type='weekly') }}" class="btn btn-sm">
+                    <i class="fas fa-download"></i> Weekly PDF
+                </a>
+                <a href="{{ url_for('download_statement', statement_type='monthly') }}" class="btn btn-sm">
+                    <i class="fas fa-download"></i> Monthly PDF
+                </a>
+                <a href="{{ url_for('download_statement', statement_type='yearly') }}" class="btn btn-sm">
+                    <i class="fas fa-download"></i> Yearly PDF
+                </a>
+            </div>
+        </div>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Details</th>
+                    <th>Balance After</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ transaction.account_number }}</td>
+                    <td>
+                        <span class="badge {% if transaction.transaction_type == 'deposit' %}badge-success{% elif transaction.transaction_type == 'withdraw' %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ transaction.transaction_type.title() }}
+                        </span>
+                    </td>
+                    <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
+                    <td>{{ transaction.details or '-' }}</td>
+                    <td>₹{{ "%.2f"|format(transaction.balance_after) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+.badge-success { background: var(--success); color: white; }
+.badge-warning { background: var(--warning); color: black; }
+.badge-info { background: var(--primary-light); color: white; }
+</style>
+{% endblock %}

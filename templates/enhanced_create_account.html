@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="page-title" style="margin-bottom: 0;">
+            <i class="fas fa-user-plus"></i> Create New Account
+        </h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    {% if success %}
+    <div class="success-message">
+        <h3><i class="fas fa-check-circle"></i> Account Created Successfully!</h3>
+        <p><strong>Account Number:</strong> {{ account_number }}</p>
+        <p><strong>PIN:</strong> {{ pin }}</p>
+        <p>Please provide these credentials to the customer.</p>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-message">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="table-container">
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">
+                    <i class="fas fa-user"></i> Customer Name
+                </label>
+                <input type="text" id="name" name="name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mobile">
+                    <i class="fas fa-phone"></i> Mobile Number
+                </label>
+                <input type="tel" id="mobile" name="mobile" class="form-control" 
+                       pattern="[0-9]{10}" placeholder="Enter 10-digit mobile number" required>
+            </div>
+            <div class="form-group">
+            <label for="email">
+              <i class="fas fa-envelope"></i> Email Address
+            </label>
+            <input type="email" id="email" name="email" class="form-control" 
+                placeholder="Enter customer email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="address">
+                    <i class="fas fa-map-marker-alt"></i> Address
+                </label>
+                <textarea id="address" name="address" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="dob">
+                    <i class="fas fa-calendar-alt"></i> Date of Birth
+                </label>
+                <div class="calendar-input">
+                    <input type="date" id="dob" name="dob" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="aadhar">
+                    <i class="fas fa-id-card"></i> Aadhar Card Number
+                </label>
+                <input type="text" id="aadhar" name="aadhar" class="form-control" 
+                       pattern="[0-9]{12}" placeholder="Enter 12-digit Aadhar number" required>
+            </div>
+
+            <div class="form-group">
+                <label for="pin">
+                    <i class="fas fa-lock"></i> Set 4-digit PIN
+                </label>
+                <input type="password" id="pin" name="pin" class="form-control" 
+                       pattern="[0-9]{4}" maxlength="4" placeholder="Enter 4-digit PIN" required>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; padding: 1rem;">
+                <i class="fas fa-plus-circle"></i> Create Account
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Input validation
+    document.getElementById('mobile').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    document.getElementById('aadhar').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    document.getElementById('pin').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Set max date to today for DOB
+    document.getElementById('dob').setAttribute('max', new Date().toISOString().split('T')[0]);
+</script>
+{% endblock %}

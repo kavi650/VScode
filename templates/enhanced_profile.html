@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Profile - E-Bank</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-light: #00addb;
+            --primary-dark: #0066cc;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --text-dark: #333;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-light);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-right {
+            margin-left: auto;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .profile-header {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-hover);
+            display: flex;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .profile-picture-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-picture-container {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-picture-container:hover {
+            transform: scale(1.05);
+        }
+
+        .profile-picture {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-light);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .picture-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            gap: 0.5rem;
+        }
+
+        .profile-picture-container:hover .picture-overlay {
+            opacity: 1;
+        }
+
+        .upload-controls {
+            text-align: center;
+        }
+
+        .upload-info {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .profile-summary {
+            flex: 1;
+        }
+
+        .profile-summary h2 {
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .account-type {
+            color: var(--warning);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .member-since {
+            color: #666;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .profile-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .card-content {
+            padding: 2rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .account-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary-light);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .verified {
+            color: var(--success);
+        }
+
+        .unverified {
+            color: var(--warning);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            width: fit-content;
+        }
+
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .security-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .security-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .security-item:hover {
+            border-color: var(--primary-light);
+            background: white;
+            box-shadow: var(--shadow);
+        }
+
+        .security-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .security-info i {
+            font-size: 1.5rem;
+            color: var(--primary-light);
+            width: 30px;
+            text-align: center;
+        }
+
+        .security-info h4 {
+            margin: 0;
+            color: var(--primary-dark);
+        }
+
+        .security-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .preferences-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .preference-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .preference-info h4 {
+            margin: 0;
+            color: var(--primary-dark);
+        }
+
+        .preference-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary-light);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .quick-actions-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .quick-actions-section h3 {
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .quick-action-btn {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border: 2px solid var(--primary-light);
+            color: var(--primary-dark);
+            padding: 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--primary-light);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .quick-action-btn i {
+            font-size: 1.5rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-light);
+            background: rgba(0,173,219,0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-light);
+            background: rgba(0,173,219,0.1);
+        }
+
+        .upload-placeholder i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+
+        .upload-placeholder p {
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .upload-placeholder small {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .image-preview {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .preview-actions {
+            margin-top: 1rem;
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .text-danger {
+            color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 2rem;
+            }
+            
+            .profile-summary {
+                width: 100%;
+            }
+            
+            .profile-summary h2 {
+                font-size: 2rem;
+            }
+            
+            .profile-stats {
+                justify-content: center;
+            }
+            
+            .profile-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .security-item, .preference-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1 class="page-title">
+                <i class="fas fa-user-circle"></i> Your Enhanced Profile
+            </h1>
+            <a href="#" class="btn btn-blue btn-right">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Message display section -->
+        <div id="message-container">
+            <!-- Messages will be displayed here dynamically -->
+        </div>
+
+        <!-- Profile Header with Picture -->
+        <div class="profile-header">
+            <div class="profile-picture-section">
+                <div class="profile-picture-container">
+                    <img src="https://via.placeholder.com/150" 
+                         alt="Profile Picture" 
+                         class="profile-picture" 
+                         id="profilePicture">
+                    <div class="picture-overlay">
+                        <i class="fas fa-camera"></i>
+                        <span>Change Photo</span>
+                    </div>
+                    <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="upload-controls">
+                    <button onclick="document.getElementById('profilePictureInput').click()" class="btn btn-secondary">
+                        <i class="fas fa-upload"></i> Upload New Photo
+                    </button>
+                    <p class="upload-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Supported: PNG, JPG, JPEG, GIF (Max 16MB)
+                    </p>
+                </div>
+            </div>
+            
+            <div class="profile-summary">
+                <h2>John Doe</h2>
+                <p class="account-type">
+                    <i class="fas fa-star"></i> Premium Banking Customer
+                </p>
+                <div class="member-since">
+                    <i class="fas fa-calendar-check"></i>
+                    Member since January 2022
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">₹85,420.75</span>
+                        <span class="stat-label">Account Balance</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">₹12,500.00</span>
+                        <span class="stat-label">Wallet Balance</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">INR</span>
+                        <span class="stat-label">Preferred Currency</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Information Cards -->
+        <div class="profile-cards-grid">
+            <!-- Personal Information Card -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user"></i> Personal Information</h3>
+                    <button class="edit-btn" onclick="editSection('personal')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                </div>
+                <div class="card-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Full Name</span>
+                            <span class="info-value">John Doe</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date of Birth</span>
+                            <span class="info-value">January 15, 1985</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email Address</span>
+                            <span class="info-value">
+                                john.doe@example.com
+                                <i class="fas fa-check-circle verified" title="Verified"></i>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Mobile Number</span>
+                            <span class="info-value">+91 98765 43210</span>
+                        </div>
+                        <div class="info-item full-width">
+                            <span class="info-label">Address</span>
+                            <span class="info-value">123 Main Street, Mumbai, Maharashtra 400001</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Information Card -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-university"></i> Account Information</h3>
+                    <button class="edit-btn" onclick="editSection('account')">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                </div>
+                <div class="card-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Account Number</span>
+                            <span class="info-value account-number">
+                                123456789012
+                                <button onclick="copyToClipboard('123456789012')" class="copy-btn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Account Status</span>
+                            <span class="info-value">
+                                <span class="status-badge active">
+                                    <i class="fas fa-check-circle"></i> Active
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Aadhar Number</span>
+                            <span class="info-value">XXXX-XXXX-1234</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Preferred Currency</span>
+                            <span class="info-value">INR - Indian Rupee</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Settings Card -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                    <button class="edit-btn" onclick="editSection('security')">
+                        <i class="fas fa-key"></i> Manage
+                    </button>
+                </div>
+                <div class="card-content">
+                    <div class="security-items">
+                        <div class="security-item">
+                            <div class="security-info">
+                                <i class="fas fa-lock"></i>
+                                <div>
+                                    <h4>Account PIN</h4>
+                                    <p>Last changed 30 days ago</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm" onclick="changePIN()">Change PIN</button>
+                        </div>
+                        
+                        <div class="security-item">
+                            <div class="security-info">
+                                <i class="fas fa-envelope"></i>
+                                <div>
+                                    <h4>Email Verification</h4>
+                                    <p>
+                                        <span class="text-success">Verified</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="security-item">
+                            <div class="security-info">
+                                <i class="fas fa-mobile-alt"></i>
+                                <div>
+                                    <h4>Mobile Number</h4>
+                                    <p>Verified and secure</p>
+                                </div>
+                            </div>
+                            <span class="text-success"><i class="fas fa-check-circle"></i> Verified</span>
+                        </div>
+                        
+                        <div class="security-item">
+                            <div class="security-info">
+                                <i class="fas fa-history"></i>
+                                <div>
+                                    <h4>Login Activity</h4>
+                                    <p>Monitor your account access</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="viewLoginActivity()">View Activity</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Card -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-sliders-h"></i> Preferences</h3>
+                    <button class="edit-btn" onclick="editSection('preferences')">
+                        <i class="fas fa-edit"></i> Customize
+                    </button>
+                </div>
+                <div class="card-content">
+                    <div class="preferences-list">
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <h4>Email Notifications</h4>
+                                <p>Receive transaction alerts and updates</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <h4>SMS Alerts</h4>
+                                <p>Get instant SMS for transactions</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <h4>Marketing Communications</h4>
+                                <p>Receive promotional offers and updates</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="preference-item">
+                            <div class="preference-info">
+                                <h4>Dark Mode</h4>
+                                <p>Enable dark theme for the interface</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+            <div class="quick-actions-grid">
+                <button class="quick-action-btn" onclick="downloadStatement()">
+                    <i class="fas fa-download"></i>
+                    <span>Download Statement</span>
+                </button>
+                <button class="quick-action-btn" onclick="generateQRCode()">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Generate QR Code</span>
+                </button>
+                <button class="quick-action-btn" onclick="contactSupport()">
+                    <i class="fas fa-headset"></i>
+                    <span>Contact Support</span>
+                </button>
+                <button class="quick-action-btn" onclick="viewAnalytics()">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>View Analytics</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Picture Upload Modal -->
+    <div id="uploadModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-camera"></i> Upload Profile Picture</h3>
+                <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="profilePictureForm" enctype="multipart/form-data">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-placeholder">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & drop your image here or click to browse</p>
+                            <small>Supported formats: PNG, JPG, JPEG, GIF (Max 16MB)</small>
+                        </div>
+                        <input type="file" name="profile_picture" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImage" src="" alt="Preview">
+                        <div class="preview-actions">
+                            <button type="button" onclick="removePreview()" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-actions">
+                        <button type="button" onclick="closeUploadModal()" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn" id="uploadBtn" disabled>
+                            <i class="fas fa-upload"></i> Upload Picture
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFileUpload();
+            showMessage('success', 'Profile loaded successfully!');
+        });
+
+        function initializeFileUpload() {
+            const fileInput = document.getElementById('profilePictureInput');
+            const modalFileInput = document.getElementById('fileInput');
+            const profilePicture = document.getElementById('profilePicture');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            // Handle profile picture click
+            profilePicture.addEventListener('click', function() {
+                document.getElementById('uploadModal').style.display = 'flex';
+            });
+            
+            // Handle file input change (from button)
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    document.getElementById('uploadModal').style.display = 'flex';
+                    modalFileInput.files = e.target.files;
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+            
+            // Handle modal file input change
+            modalFileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+            
+            // Handle upload area click
+            uploadArea.addEventListener('click', function() {
+                modalFileInput.click();
+            });
+            
+            // Handle drag and drop
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    modalFileInput.files = files;
+                    handleFileSelect(files[0]);
+                }
+            });
+            
+            // Handle form submission
+            document.getElementById('profilePictureForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                uploadProfilePicture();
+            });
+        }
+
+        function handleFileSelect(file) {
+            // Validate file
+            if (!file.type.startsWith('image/')) {
+                showMessage('error', 'Please select a valid image file.');
+                return;
+            }
+            
+            if (file.size > 16 * 1024 * 1024) { // 16MB
+                showMessage('error', 'File size must be less than 16MB.');
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removePreview() {
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'block';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadBtn').disabled = true;
+        }
+
+        async function uploadProfilePicture() {
+            const formData = new FormData();
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!fileInput.files[0]) {
+                showMessage('error', 'Please select a file to upload.');
+                return;
+            }
+            
+            formData.append('profile_picture', fileInput.files[0]);
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            const originalText = uploadBtn.innerHTML;
+            
+            try {
+                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                uploadBtn.disabled = true;
+                
+                // Simulate upload
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Success
+                showMessage('success', 'Profile picture updated successfully!');
+                document.getElementById('profilePicture').src = document.getElementById('previewImage').src;
+                closeUploadModal();
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('error', 'Upload failed. Please try again.');
+            } finally {
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+            }
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            removePreview();
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show temporary feedback
+                const btn = event.target.closest('.copy-btn');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.style.color = 'var(--success)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.style.color = '';
+                }, 2000);
+                
+                showMessage('success', 'Account number copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showMessage('error', 'Failed to copy to clipboard');
+            });
+        }
+
+        function editSection(section) {
+            let title, content;
+            
+            switch(section) {
+                case 'personal':
+                    title = 'Edit Personal Information';
+                    content = `
+                        <form class="edit-form">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" value="John Doe" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" value="john.doe@example.com" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Mobile Number</label>
+                                <input type="tel" value="+91 98765 43210" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <textarea class="form-control" rows="3">123 Main Street, Mumbai, Maharashtra 400001</textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="btn">Save Changes</button>
+                            </div>
+                        </form>
+                    `;
+                    break;
+                    
+                case 'account':
+                    title = 'Account Settings';
+                    content = `
+                        <form class="edit-form">
+                            <div class="form-group">
+                                <label>Preferred Currency</label>
+                                <select class="form-control">
+                                    <option value="INR" selected>INR - Indian Rupee</option>
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Transaction Limits</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <input type="number" placeholder="Daily Limit" class="form-control" value="100000">
+                                    <input type="number" placeholder="Per Transaction" class="form-control" value="50000">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="btn">Update Settings</button>
+                            </div>
+                        </form>
+                    `;
+                    break;
+                    
+                case 'security':
+                    title = 'Security Settings';
+                    content = `
+                        <div class="security-options">
+                            <div class="security-option">
+                                <h4>Change PIN</h4>
+                                 <p>Update your 4-digit account PIN</p>
+                                <button class="btn btn-warning" onclick="changePIN()">Change PIN</button>
+                            </div>
+                            <div class="security-option">
+                                <h4>Two-Factor Authentication</h4>
+                                <p>Add an extra layer of security</p>
+                                <button class="btn btn-info">Enable 2FA</button>
+                            </div>
+                            <div class="security-option">
+                                <h4>Login Activity</h4>
+                                <p>Review recent account access</p>
+                                <button class="btn btn-secondary" onclick="viewLoginActivity()">View Activity</button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'preferences':
+                    title = 'Customize Preferences';
+                    content = `
+                        <form class="edit-form">
+                            <div class="preference-group">
+                                <h4>Notification Settings</h4>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" checked> Email notifications</label>
+                                    <label><input type="checkbox" checked> SMS alerts</label>
+                                    <label><input type="checkbox"> Push notifications</label>
+                                    <label><input type="checkbox"> Marketing emails</label>
+                                </div>
+                            </div>
+                            <div class="preference-group">
+                                <h4>Display Settings</h4>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox"> Dark mode</label>
+                                    <label><input type="checkbox" checked> Show balance on dashboard</label>
+                                    <label><input type="checkbox" checked> Show recent transactions</label>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="btn">Save Preferences</button>
+                            </div>
+                        </form>
+                    `;
+                    break;
+            }
+            
+            showEditModal(title, content);
+        }
+
+        function showEditModal(title, content) {
+            const modal = document.createElement('div');
+            modal.className = 'modal edit-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-edit"></i> ${title}</h3>
+                        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            modal.style.display = 'flex';
+            
+            // Close on outside click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeEditModal();
+                }
+            });
+        }
+
+        function closeEditModal() {
+            const modal = document.querySelector('.edit-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function changePIN() {
+            showEditModal('Change Account PIN', `
+                <form class="edit-form" onsubmit="processPINChange(event)">
+                    <div class="form-group">
+                        <label>Current PIN</label>
+                        <input type="password" maxlength="4" pattern="[0-9]{4}" class="form-control pin-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New PIN</label>
+                        <input type="password" maxlength="4" pattern="[0-9]{4}" class="form-control pin-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New PIN</label>
+                        <input type="password" maxlength="4" pattern="[0-9]{4}" class="form-control pin-input" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Change PIN</button>
+                    </div>
+                </form>
+            `);
+            
+            // Add PIN input validation
+            document.querySelectorAll('.pin-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
+            });
+        }
+
+        function processPINChange(event) {
+            event.preventDefault();
+            showMessage('success', 'PIN changed successfully!');
+            closeEditModal();
+        }
+
+        function resendVerification() {
+            if (confirm('Send verification email to john.doe@example.com?')) {
+                showMessage('success', 'Verification email sent!');
+            }
+        }
+
+        function viewLoginActivity() {
+            showEditModal('Recent Login Activity', `
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-info">
+                            <div class="activity-details">
+                                <strong>Successful Login</strong>
+                                <small>Chrome on Windows • 192.168.1.100</small>
+                            </div>
+                            <div class="activity-time">2 hours ago</div>
+                        </div>
+                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-info">
+                            <div class="activity-details">
+                                <strong>Successful Login</strong>
+                                <small>Mobile App • 192.168.1.105</small>
+                            </div>
+                            <div class="activity-time">1 day ago</div>
+                        </div>
+                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-info">
+                            <div class="activity-details">
+                                <strong>Failed Login Attempt</strong>
+                                <small>Unknown Device • 203.45.67.89</small>
+                            </div>
+                            <div class="activity-time">3 days ago</div>
+                        </div>
+                        <i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i>
+                    </div>
+                </div>
+            `);
+        }
+
+        // Quick action functions
+        function downloadStatement() {
+            showMessage('info', 'Preparing your account statement...');
+        }
+
+        function generateQRCode() {
+            showEditModal('Your Account QR Code', `
+                <div style="text-align: center; padding: 2rem;">
+                    <div id="qrcode" style="width: 200px; height: 200px; margin: 0 auto; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                        <span>QR Code would appear here</span>
+                    </div>
+                    <p style="margin-top: 1.5rem;">Scan this QR code to share your account details</p>
+                    <button class="btn" style="margin-top: 1rem;">
+                        <i class="fas fa-download"></i> Download QR Code
+                    </button>
+                </div>
+            `);
+        }
+
+        function contactSupport() {
+            showEditModal('Contact Support', `
+                <div class="support-options">
+                    <div class="support-option">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>Phone Support</h4>
+                            <p>Call us at: <strong>1800-123-BANK</strong></p>
+                            <small>Available 24/7</small>
+                        </div>
+                    </div>
+                    <div class="support-option">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Email Support</h4>
+                            <p>Email: <strong>support@ebank.com</strong></p>
+                            <small>Response within 24 hours</small>
+                        </div>
+                    </div>
+                    <div class="support-option">
+                        <i class="fas fa-comments"></i>
+                        <div>
+                            <h4>Live Chat</h4>
+                            <p>Chat with our support team</p>
+                            <button class="btn btn-info btn-sm">Start Chat</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function viewAnalytics() {
+            showMessage('info', 'Opening spending analytics...');
+        }
+
+        function showMessage(type, text) {
+            const messageContainer = document.getElementById('message-container');
+            const message = document.createElement('div');
+            message.className = `alert alert-${type}`;
+            message.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                ${text}
+            `;
+            
+            messageContainer.appendChild(message);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                message.remove();
+            }, 5000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(event) {
+            const uploadModal = document.getElementById('uploadModal');
+            if (event.target === uploadModal) {
+                closeUploadModal();
+            }
+        });
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeUploadModal();
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

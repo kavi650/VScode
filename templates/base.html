@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}E-Bank - Modern Banking Solution{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="fullscreen-container">
+        {% block header %}
+        {% if session.admin_logged_in or session.user_account %}
+        <header class="header header-flex">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <span>E-Bank</span>
+            </div>
+            {% if session.user_account or session.admin_logged_in %}
+            <a href="{{ url_for('logout') }}" class="logout-btn logout-btn-right">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            {% endif %}
+        </header>
+        {% endif %}
+        {% endblock %}
+
+        <main class="fullscreen-main">
+            {% block content %}{% endblock %}
+        </main>
+
+        {% block footer %}
+        {% if session.admin_logged_in or session.user_account %}
+        <footer class="footer">
+            <div class="footer-content footer-center">
+                {% if session.user_account %}
+                <p>&copy; 2025 E-Bank®. All Rights Reserved</p>
+                {% endif %}
+            </div>
+        </footer>
+        {% endif %}
+        {% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

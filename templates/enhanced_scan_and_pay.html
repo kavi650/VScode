@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+
+{% block title %}Scan & Pay - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="page-header">
+            <h2><i class="fas fa-qrcode"></i> Scan & Pay</h2>
+            <p>Scan QR codes to make instant payments from your wallet</p>
+        </div>
+        <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Wallet Balance Display -->
+    <div class="wallet-balance">
+        <div class="balance-card">
+            <h3><i class="fas fa-wallet"></i> Available Wallet Balance</h3>
+            <div class="amount">₹{{ "%.2f"|format(user.wallet_balance) }}</div>
+            <p>Available for QR Payments</p>
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="alert {% if 'successful' in message.lower() %}alert-success{% else %}alert-error{% endif %}">
+        <i class="fas {% if 'successful' in message.lower() %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- QR Scanner Section -->
+    <div class="scanner-section">
+        <div class="scanner-container">
+            <h3><i class="fas fa-camera"></i> QR Code Scanner</h3>
+            
+            <!-- Camera Scanner -->
+            <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
+            
+            <!-- Manual Payment Input -->
+            <div class="manual-input" style="margin-top: 2rem;">
+                <h4>Or enter payment details manually:</h4>
+                <form method="POST" id="paymentForm">
+                    <div class="payment-details-grid">
+                        <div class="input-container">
+                            <label for="to_account">Account Number:</label>
+                            <input type="text" 
+                                   id="to_account" 
+                                   name="to_account" 
+                                   placeholder="Enter recipient account number"
+                                   class="form-control"
+                                   maxlength="8"
+                                   pattern="[0-9]{8}">
+                            <small>8-digit account number</small>
+                        </div>
+                        
+                        <div class="input-container">
+                            <label for="amount">Amount (₹):</label>
+                            <input type="number" 
+                                   id="amount" 
+                                   name="amount" 
+                                   placeholder="0.00"
+                                   class="form-control"
+                                   step="0.01"
+                                   min="0.01">
+                            <small>Payment amount</small>
+                        </div>
+                        
+                        <div class="input-container">
+                            <label for="description">Description:</label>
+                            <input type="text" 
+                                   id="description" 
+                                   name="description" 
+                                   placeholder="Payment description"
+                                   class="form-control">
+                            <small>Optional payment note</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden field for QR data -->
+                    <input type="hidden" id="qr_data" name="qr_data">
+                    
+                    <div class="form-group pin-section">
+                        <label for="pin">Enter PIN:</label>
+                        <input type="password" 
+                               id="pin" 
+                               name="pin" 
+                               maxlength="4" 
+                               required 
+                               class="form-control pin-input">
+                    </div>
+                    
+                    <div class="form-group button-section">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-credit-card"></i> Process Payment
+                        </button>
+                        <a href="{{ url_for('generate_qr') }}" class="btn btn-secondary">
+                            <i class="fas fa-qrcode"></i> Generate QR Code
+                        </a>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Preview -->
+    <div id="payment-preview" class="payment-preview" style="display: none;">
+        <h3><i class="fas fa-info-circle"></i> Payment Preview</h3>
+        <div class="preview-details">
+            <p><strong>To Account:</strong> <span id="preview-account"></span></p>
+            <p><strong>Amount:</strong> ₹<span id="preview-amount"></span></p>
+            <p><strong>Description:</strong> <span id="preview-description"></span></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.wallet-balance {
+    margin-bottom: 2rem;
+}
+
+.balance-card {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: var(--shadow-hover);
+}
+
+.balance-card .amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+.scanner-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.scanner-container h3 {
+    text-align: center;
+    color: var(--primary-dark);
+    margin-bottom: 2rem;
+}
+
+.manual-input {
+    border-top: 2px solid var(--light-gray);
+    padding-top: 2rem;
+}
+
+.manual-input h4 {
+    color: var(--primary-dark);
+    margin-bottom: 1rem;
+}
+
+.payment-preview {
+    background: #f8f9fa;
+    border: 2px solid var(--primary-dark);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.preview-details p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+#reader {
+    border: 2px dashed var(--primary-dark);
+    border-radius: 10px;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.input-container {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.input-container:focus-within {
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 0 3px rgba(0,83,186,0.1);
+}
+
+.input-container label {
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.input-container input {
+    width: 100%;
+    border: none;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.input-container input:focus {
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0,83,186,0.2);
+}
+
+.input-container small {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.pin-section {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin: 2rem 0;
+}
+
+.pin-section label {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.pin-input {
+    max-width: 200px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.5rem;
+}
+
+.button-section {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.navigation-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.btn-home {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light)) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-hover);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-home:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-hover);
+    color: white !important;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .balance-card .amount {
+        font-size: 2rem;
+    }
+    
+    .scanner-section {
+        padding: 1rem;
+    }
+    
+    .payment-details-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .button-section, .navigation-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let html5QrCode;
+    
+    function onScanSuccess(decodedText, decodedResult) {
+        // Handle successful QR scan
+        console.log(`QR Code scanned: ${decodedText}`);
+        
+        // Fill the manual input field
+        document.getElementById('qr_data').value = decodedText;
+        
+        // Populate input fields from QR data
+        populateInputsFromQR(decodedText);
+        
+        // Show payment preview
+        showPaymentPreview(decodedText);
+        
+        // Stop scanning
+        html5QrCode.stop().then(() => {
+            console.log("QR Code scanning stopped.");
+        }).catch(err => {
+            console.log("Error stopping scanner:", err);
+        });
+    }
+    
+    function onScanFailure(error) {
+        // Handle scan failure - you can ignore this
+        console.warn(`QR Code scan error: ${error}`);
+    }
+    
+    function showPaymentPreview(qrData) {
+        try {
+            const parts = qrData.split(':');
+            if (parts.length >= 2) {
+                document.getElementById('preview-account').textContent = parts[0];
+                document.getElementById('preview-amount').textContent = parts[1];
+                document.getElementById('preview-description').textContent = parts[2] || 'QR Payment';
+                document.getElementById('payment-preview').style.display = 'block';
+            }
+        } catch (error) {
+            console.log('Error parsing QR data:', error);
+        }
+    }
+    
+    // Start QR Scanner
+    function startScanner() {
+        try {
+            html5QrCode = new Html5Qrcode("reader");
+            
+            // Show loading message
+            document.getElementById('reader').innerHTML = 
+                '<div style="padding: 2rem; text-align: center; color: #667eea;">' +
+                '<i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>' +
+                '<p>Initializing camera...</p>' +
+                '</div>';
+            
+            Html5Qrcode.getCameras().then(devices => {
+                console.log('Available cameras:', devices);
+                
+                if (devices && devices.length) {
+                    // Try to use back camera first (usually better for scanning)
+                    let cameraId = devices[0].id;
+                    for (let device of devices) {
+                        if (device.label.toLowerCase().includes('back')) {
+                            cameraId = device.id;
+                            break;
+                        }
+                    }
+                    
+                    console.log('Using camera:', cameraId);
+                    
+                    html5QrCode.start(
+                        cameraId, 
+                        {
+                            fps: 10,
+                            qrbox: { width: 200, height: 200 },
+                            aspectRatio: 1.0
+                        },
+                        onScanSuccess,
+                        onScanFailure
+                    ).then(() => {
+                        console.log('QR scanner started successfully');
+                    }).catch(err => {
+                        console.error("Error starting scanner:", err);
+                        showCameraError('Camera access denied or not available. Please enable camera permissions and refresh the page.');
+                    });
+                } else {
+                    showCameraError('No cameras found on this device.');
+                }
+            }).catch(err => {
+                console.error("Error getting cameras:", err);
+                showCameraError('Camera access not supported in this browser or HTTPS required.');
+            });
+            
+        } catch (error) {
+            console.error('Scanner initialization failed:', error);
+            showCameraError('QR scanner initialization failed.');
+        }
+    }
+    
+    function showCameraError(message) {
+        document.getElementById('reader').innerHTML = 
+            '<div style="padding: 2rem; text-align: center; color: #666; border: 2px dashed #ddd; border-radius: 10px;">' +
+            '<i class="fas fa-camera-retro" style="font-size: 3rem; margin-bottom: 1rem; color: #ccc;"></i>' +
+            '<p style="font-weight: 600; margin-bottom: 0.5rem;">Camera Not Available</p>' +
+            '<p style="font-size: 0.9rem;">' + message + '</p>' +
+            '<p style="font-size: 0.9rem; margin-top: 1rem;">Please use manual input below.</p>' +
+            '</div>';
+    }
+    
+    // Initialize scanner when page loads
+    startScanner();
+    
+    // Function to create QR data from manual inputs
+    function updateQRDataFromInputs() {
+        const toAccount = document.getElementById('to_account').value;
+        const amount = document.getElementById('amount').value;
+        const description = document.getElementById('description').value || 'Manual Payment';
+        
+        if (toAccount && amount) {
+            const qrData = `${toAccount}:${amount}:${description}`;
+            document.getElementById('qr_data').value = qrData;
+            showPaymentPreview(qrData);
+        } else {
+            document.getElementById('qr_data').value = '';
+            document.getElementById('payment-preview').style.display = 'none';
+        }
+    }
+    
+    // Function to populate manual inputs from QR data
+    function populateInputsFromQR(qrData) {
+        try {
+            const parts = qrData.split(':');
+            if (parts.length >= 2) {
+                document.getElementById('to_account').value = parts[0];
+                document.getElementById('amount').value = parts[1];
+                document.getElementById('description').value = parts[2] || '';
+            }
+        } catch (error) {
+            console.log('Error parsing QR data:', error);
+        }
+    }
+    
+    // Manual input handlers
+    ['to_account', 'amount', 'description'].forEach(function(fieldId) {
+        document.getElementById(fieldId).addEventListener('input', updateQRDataFromInputs);
+    });
+    
+    // Manual QR data input handler (for direct QR data input)
+    document.getElementById('qr_data').addEventListener('input', function() {
+        const qrData = this.value;
+        if (qrData.includes(':')) {
+            showPaymentPreview(qrData);
+            populateInputsFromQR(qrData);
+        } else {
+            document.getElementById('payment-preview').style.display = 'none';
+        }
+    });
+    
+    // Form validation
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        // Update QR data from inputs before validation
+        updateQRDataFromInputs();
+        
+        const qrData = document.getElementById('qr_data').value;
+        const pin = document.getElementById('pin').value;
+        const toAccount = document.getElementById('to_account').value;
+        const amount = document.getElementById('amount').value;
+        
+        if (!qrData && (!toAccount || !amount)) {
+            e.preventDefault();
+            alert('Please scan a QR code or enter payment details manually.');
+            return;
+        }
+        
+        if (!pin || pin.length !== 4) {
+            e.preventDefault();
+            alert('Please enter your 4-digit PIN.');
+            return;
+        }
+        
+        // Confirm payment
+        const finalAmount = amount || qrData.split(':')[1];
+        const finalAccount = toAccount || qrData.split(':')[0];
+        
+        if (finalAmount && finalAccount) {
+            if (!confirm(`Confirm payment of ₹${finalAmount} to account ${finalAccount}?`)) {
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - E-Bank{% endblock %}
+
+{% block content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="page-title" style="margin-bottom: 0;">
+            <i class="fas fa-chart-bar"></i> Analytics Dashboard
+        </h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <h4>Current Period</h4>
+            <div class="stat-value" id="currentPeriod">Weekly</div>
+        </div>
+        <div class="stat-card">
+            <h4>Total Deposits</h4>
+            <div class="stat-value" id="totalDeposits">₹0.00</div>
+        </div>
+        <div class="stat-card">
+            <h4>Total Withdrawals</h4>
+            <div class="stat-value" id="totalWithdrawals">₹0.00</div>
+        </div>
+        <div class="stat-card">
+            <h4>Total Transfers</h4>
+            <div class="stat-value" id="totalTransfers">₹0.00</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h3><i class="fas fa-chart-line"></i> Transaction Analytics</h3>
+        
+        <div class="chart-controls">
+            <button onclick="loadChart('weekly')" class="period-btn active" data-period="weekly">
+                <i class="fas fa-calendar-week"></i> Weekly
+            </button>
+            <button onclick="loadChart('monthly')" class="period-btn" data-period="monthly">
+                <i class="fas fa-calendar-month"></i> Monthly
+            </button>
+            <button onclick="loadChart('yearly')" class="period-btn" data-period="yearly">
+                <i class="fas fa-calendar"></i> Yearly
+            </button>
+        </div>
+
+        <div class="chart-wrapper">
+            <canvas id="analyticsChart" width="800" height="400"></canvas>
+        </div>
+
+        <div id="loading" class="spinner" style="display: none;"></div>
+    </div>
+</div>
+
+<style>
+.chart-wrapper {
+    margin: 2rem 0;
+    height: 400px;
+    position: relative;
+}
+
+.chart-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.period-btn {
+    background: var(--text-light);
+    border: 2px solid var(--primary-light);
+    color: var(--primary-dark);
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.period-btn:hover {
+    background: var(--primary-light);
+    color: var(--text-light);
+}
+
+.period-btn.active {
+    background: var(--primary-light);
+    color: var(--text-light);
+}
+
+#analyticsChart {
+    max-width: 100%;
+    height: auto;
+}
+</style>
+
+<script>
+let analyticsChart = null;
+let currentPeriod = 'weekly';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadChart('weekly');
+});
+
+async function loadChart(period) {
+    // Update active button
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-period="${period}"]`).classList.add('active');
+    
+    // Show loading
+    document.getElementById('loading').style.display = 'block';
+    
+    try {
+        const response = await fetch(`/analytics_data/${period}`);
+        const data = await response.json();
+        
+        createChart(data, period);
+        updateStats(data, period);
+        currentPeriod = period;
+    } catch (error) {
+        console.error('Error loading analytics data:', error);
+        // Create sample data for demonstration
+        const sampleData = generateSampleData(period);
+        createChart(sampleData, period);
+        updateStats(sampleData, period);
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+
+function generateSampleData(period) {
+    const data = {};
+    let periods = [];
+    
+    if (period === 'weekly') {
+        for (let i = 0; i < 12; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - (i * 7));
+            periods.push(`2024-W${52 - i}`);
+        }
+    } else if (period === 'monthly') {
+        for (let i = 0; i < 12; i++) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            periods.push(date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0'));
+        }
+    } else {
+        for (let i = 0; i < 5; i++) {
+            const year = new Date().getFullYear() - i;
+            periods.push(year.toString());
+        }
+    }
+    
+    periods.forEach(p => {
+        data[p] = {
+            deposits: Math.random() * 10000 + 5000,
+            withdrawals: Math.random() * 8000 + 3000,
+            transfers: Math.random() * 5000 + 1000
+        };
+    });
+    
+    return data;
+}
+
+function createChart(data, period) {
+    const ctx = document.getElementById('analyticsChart').getContext('2d');
+    
+    if (analyticsChart) {
+        analyticsChart.destroy();
+    }
+    
+    const labels = Object.keys(data).reverse();
+    const deposits = labels.map(label => data[label]?.deposits || 0);
+    const withdrawals = labels.map(label => data[label]?.withdrawals || 0);
+    const transfers = labels.map(label => data[label]?.transfers || 0);
+    
+    analyticsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Deposits',
+                    data: deposits,
+                    backgroundColor: '#28a745',
+                    borderColor: '#28a745',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Withdrawals',
+                    data: withdrawals,
+                    backgroundColor: '#dc3545',
+                    borderColor: '#dc3545',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Transfers',
+                    data: transfers,
+                    backgroundColor: '#ffc107',
+                    borderColor: '#ffc107',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `${period.charAt(0).toUpperCase() + period.slice(1)} Transaction Analysis`
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: period.charAt(0).toUpperCase() + period.slice(1)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateStats(data, period) {
+    let totalDeposits = 0;
+    let totalWithdrawals = 0;
+    let totalTransfers = 0;
+    
+    Object.values(data).forEach(item => {
+        totalDeposits += item.deposits || 0;
+        totalWithdrawals += item.withdrawals || 0;
+        totalTransfers += item.transfers || 0;
+    });
+    
+    document.getElementById('currentPeriod').textContent = period.charAt(0).toUpperCase() + period.slice(1);
+    document.getElementById('totalDeposits').textContent = '₹' + totalDeposits.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById('totalWithdrawals').textContent = '₹' + totalWithdrawals.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById('totalTransfers').textContent = '₹' + totalTransfers.toLocaleString('en-US', {minimumFractionDigits: 2});
+}
+</script>
+{% endblock %}
