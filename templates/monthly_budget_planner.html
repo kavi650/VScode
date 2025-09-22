@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Budget Planner - E-Bank{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1><i class="fas fa-calendar-alt"></i> Monthly Budget Planner</h1>
+                <p>Set spending limits and track progress</p>
+            </div>
+            
+            <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+                <i class="fas fa-home"></i> Back to Dashboard
+           
+            </a>
+        </div>
+    </div>
+
+    <div class="budget-planner-content">
+        <div class="planner-card">
+            <h3>Set Monthly Budget Limits</h3>
+            <form class="budget-form" id="budgetForm">
+                <div class="form-group">
+                    <label for="monthly_income">Monthly Income Goal</label>
+                    <input type="number" id="monthly_income" name="monthly_income" placeholder="Enter target income" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="spending_limit">Spending Limit</label>
+                    <input type="number" id="spending_limit" name="spending_limit" placeholder="Enter spending limit" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="savings_goal">Savings Goal</label>
+                    <input type="number" id="savings_goal" name="savings_goal" placeholder="Enter savings target" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Budget Plan</button>
+            </form>
+        </div>
+
+        <div class="budget-summary">
+            <h3>Current Budget Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Monthly Income:</span>
+                    <span class="summary-value" id="currentIncome">₹0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Spending Limit:</span>
+                    <span class="summary-value" id="currentSpendingLimit">₹0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Savings Goal:</span>
+                    <span class="summary-value" id="currentSavingsGoal">₹0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Available for Spending:</span>
+                    <span class="summary-value" id="availableForSpending">₹0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h3>Progress Tracking</h3>
+            <div class="progress-item">
+                <label>Income Progress</label>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="incomeProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text" id="incomeProgressText">0%</span>
+                </div>
+            </div>
+            <div class="progress-item">
+                <label>Spending Progress</label>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="spendingProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text" id="spendingProgressText">0%</span>
+                </div>
+            </div>
+            <div class="progress-item">
+                <label>Savings Progress</label>
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="savingsProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text" id="savingsProgressText">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.budget-planner-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.planner-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.planner-card h3 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.budget-form {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+}
+
+.budget-summary {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.budget-summary h3 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.summary-label {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.summary-value {
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 1.1rem;
+}
+
+.progress-section {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.progress-section h3 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+}
+
+.progress-item {
+    margin-bottom: 1.5rem;
+}
+
+.progress-item label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-weight: 600;
+    color: var(--primary-dark);
+    min-width: 50px;
+    text-align: right;
+}
+
+.navigation-buttons {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.page-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBudgetData();
+    
+    document.getElementById('budgetForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveBudgetPlan();
+    });
+});
+
+function loadBudgetData() {
+    // Load existing budget data from localStorage or server
+    const savedData = localStorage.getItem('budgetData');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        document.getElementById('currentIncome').textContent = `₹${data.monthly_income || 0}`;
+        document.getElementById('currentSpendingLimit').textContent = `₹${data.spending_limit || 0}`;
+        document.getElementById('currentSavingsGoal').textContent = `₹${data.savings_goal || 0}`;
+        document.getElementById('availableForSpending').textContent = `₹${(data.monthly_income - data.savings_goal) || 0}`;
+        
+        // Update progress bars
+        updateProgressBars(data);
+    }
+}
+
+function saveBudgetPlan() {
+    const formData = {
+        monthly_income: parseFloat(document.getElementById('monthly_income').value) || 0,
+        spending_limit: parseFloat(document.getElementById('spending_limit').value) || 0,
+        savings_goal: parseFloat(document.getElementById('savings_goal').value) || 0
+    };
+    
+    // Save to localStorage (in a real app, this would be sent to the server)
+    localStorage.setItem('budgetData', JSON.stringify(formData));
+    
+    // Update display
+    loadBudgetData();
+    
+    // Show success message
+    alert('Budget plan saved successfully!');
+}
+
+function updateProgressBars(data) {
+    // Calculate progress percentages (in a real app, these would be calculated from actual data)
+    const incomeProgress = Math.min(100, (data.monthly_income / data.monthly_income) * 100); // 100% if we have income
+    const spendingProgress = Math.min(100, (data.spending_limit * 0.7 / data.spending_limit) * 100); // 70% for demo
+    const savingsProgress = Math.min(100, (data.savings_goal * 0.5 / data.savings_goal) * 100); // 50% for demo
+    
+    document.getElementById('incomeProgress').style.width = incomeProgress + '%';
+    document.getElementById('incomeProgressText').textContent = Math.round(incomeProgress) + '%';
+    
+    document.getElementById('spendingProgress').style.width = spendingProgress + '%';
+    document.getElementById('spendingProgressText').textContent = Math.round(spendingProgress) + '%';
+    
+    document.getElementById('savingsProgress').style.width = savingsProgress + '%';
+    document.getElementById('savingsProgressText').textContent = Math.round(savingsProgress) + '%';
+}
+</script>
+{% endblock %}

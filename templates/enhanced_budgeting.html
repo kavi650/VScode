@@ -160,22 +160,22 @@
     <div class="budget-tools">
         <h3><i class="fas fa-tools"></i> Budget Planning Tools</h3>
         <div class="tools-grid">
-            <div class="tool-card" onclick="openBudgetPlanner()">
+            <div class="tool-card" onclick="window.location.href='{{ url_for('monthly_budget_planner') }}'">
                 <i class="fas fa-calendar-alt"></i>
                 <h4>Monthly Budget Planner</h4>
                 <p>Set spending limits and track progress</p>
             </div>
-            <div class="tool-card" onclick="openGoalTracker()">
+            <div class="tool-card" onclick="window.location.href='{{ url_for('savings_goal_tracker') }}'">
                 <i class="fas fa-target"></i>
                 <h4>Savings Goal Tracker</h4>
                 <p>Set and monitor your financial goals</p>
             </div>
-            <div class="tool-card" onclick="openExpenseAnalyzer()">
+            <div class="tool-card" onclick="window.location.href='{{ url_for('expense_analyzer') }}'">
                 <i class="fas fa-search-dollar"></i>
                 <h4>Expense Analyzer</h4>
                 <p>Deep dive into spending patterns</p>
             </div>
-            <div class="tool-card" onclick="openInvestmentTracker()">
+            <div class="tool-card" onclick="window.location.href='{{ url_for('investment_tracker') }}'">
                 <i class="fas fa-chart-line"></i>
                 <h4>Investment Tracker</h4>
                 <p>Monitor investment performance</p>
@@ -946,17 +946,42 @@ function updateInsights() {
     const progressPercentage = Math.min(100, (savingsRate / targetSavingsRate) * 100);
     document.getElementById('savingsProgress').style.width = `${Math.max(0, progressPercentage)}%`;
     
-    // Update transaction counts (mock data for demo)
-    document.getElementById('totalTransactions').textContent = Math.floor(Math.random() * 25) + 15;
-    document.getElementById('depositCount').textContent = Math.floor(Math.random() * 8) + 3;
-    document.getElementById('transferCount').textContent = Math.floor(Math.random() * 12) + 5;
-    document.getElementById('internationalCount').textContent = Math.floor(Math.random() * 3) + 1;
+    // Update transaction counts with real data
+    const totalTransactions = chartData.transaction_count || 0;
+    document.getElementById('totalTransactions').textContent = totalTransactions;
     
-    // Update forecast
+    // Use real transaction counts from backend
+    const depositCount = chartData.deposit_count || 0;
+    const transferCount = chartData.transfer_count || 0;
+    const internationalCount = chartData.international_count || 0;
+    
+    document.getElementById('depositCount').textContent = depositCount;
+    document.getElementById('transferCount').textContent = transferCount;
+    document.getElementById('internationalCount').textContent = internationalCount;
+    
+    // Update forecast with trend analysis
     const currentBalance = chartData.account_balance || 0;
     const monthlyTrend = avgDailySpend * 30;
-    const forecastBalance = currentBalance + (income * 0.9) - monthlyTrend;
-    document.getElementById('forecastBalance').textContent = `₹${forecastBalance.toFixed(0)}`;
+    
+    // Calculate trend percentage for more accurate forecast
+    const trendChange = income > 0 ? ((monthlyTrend - income) / income * 100) : 0;
+    const forecastMultiplier = 1 + (trendChange / 100) * 0.3; // Conservative forecast adjustment
+    const forecastBalance = currentBalance + (income * 0.9) - (monthlyTrend * forecastMultiplier);
+    
+    document.getElementById('forecastBalance').textContent = `₹${Math.max(0, forecastBalance).toFixed(0)}`;
+    
+    // Update spending trend indicator
+    const trendElement = document.getElementById('spendingTrend');
+    if (trendChange > 5) {
+        trendElement.innerHTML = '<i class="fas fa-arrow-up"></i> +' + trendChange.toFixed(1) + '% from last month';
+        trendElement.style.color = '#e74c3c'; // Red for high spending
+    } else if (trendChange < -5) {
+        trendElement.innerHTML = '<i class="fas fa-arrow-down"></i> ' + trendChange.toFixed(1) + '% from last month';
+        trendElement.style.color = '#27ae60'; // Green for savings
+    } else {
+        trendElement.innerHTML = '<i class="fas fa-minus"></i> Stable spending pattern';
+        trendElement.style.color = '#3498db'; // Blue for stable
+    }
 }
 
 function animateCounters() {

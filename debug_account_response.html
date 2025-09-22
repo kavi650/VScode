@@ -1,35 +1,55 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - E-Bank</title>
+    <link rel="stylesheet" href="/static/css/modern-style.css?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="fullscreen-container">
+        
+        
+        <header class="header header-flex">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <span>E-Bank</span>
+            </div>
+            
+            <a href="/logout" class="logout-btn logout-btn-right">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            
+        </header>
+        
+        
 
-{% block title %}Create Account - E-Bank{% endblock %}
-
-{% block content %}
+        <main class="fullscreen-main">
+            
 <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h1 class="page-title" style="margin-bottom: 0;">
             <i class="fas fa-user-plus"></i> Create New Account
         </h1>
-        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-blue btn-right">
+        <a href="/admin_dashboard" class="btn btn-blue btn-right">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
     </div>
 
-    {% if success %}
-    <div class="success-message">
-        <h3><i class="fas fa-check-circle"></i> Account Created Successfully!</h3>
-        <p><strong>Account Number:</strong> {{ account_number }}</p>
-        <p><strong>PIN:</strong> {{ pin }}</p>
-        <p>Please provide these credentials to the customer.</p>
-        {% if email_status %}
-        <p><small>{{ email_status }}</small></p>
-        {% endif %}
-    </div>
-    {% endif %}
+    
 
-    {% if error %}
+    
     <div class="error-message">
-        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        <i class="fas fa-exclamation-triangle"></i> Account creation failed: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint &#34;user_mobile_key&#34;
+DETAIL:  Key (mobile)=(1234567890) already exists.
+
+[SQL: INSERT INTO &#34;user&#34; (name, email, mobile, address, date_of_birth, aadhar, account_number, pin, account_balance, wallet_balance, profile_picture, is_active, email_verified, email_verification_token, preferred_currency, created_at) VALUES (%(name)s, %(email)s, %(mobile)s, %(address)s, %(date_of_birth)s, %(aadhar)s, %(account_number)s, %(pin)s, %(account_balance)s, %(wallet_balance)s, %(profile_picture)s, %(is_active)s, %(email_verified)s, %(email_verification_token)s, %(preferred_currency)s, %(created_at)s) RETURNING &#34;user&#34;.id]
+[parameters: {&#39;name&#39;: &#39;Test User 1758363974&#39;, &#39;email&#39;: &#39;test1758363974@example.com&#39;, &#39;mobile&#39;: &#39;1234567890&#39;, &#39;address&#39;: &#39;123 Test Street&#39;, &#39;date_of_birth&#39;: datetime.date(1990, 1, 1), &#39;aadhar&#39;: &#39;123456789012&#39;, &#39;account_number&#39;: &#39;71505708&#39;, &#39;pin&#39;: &#39;1234&#39;, &#39;account_balance&#39;: 0.0, &#39;wallet_balance&#39;: 0.0, &#39;profile_picture&#39;: &#39;default.jpg&#39;, &#39;is_active&#39;: True, &#39;email_verified&#39;: False, &#39;email_verification_token&#39;: None, &#39;preferred_currency&#39;: &#39;INR&#39;, &#39;created_at&#39;: datetime.datetime(2025, 9, 20, 10, 26, 16, 283355)}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
     </div>
-    {% endif %}
+    
 
     <div class="table-container">
         <form method="POST">
@@ -84,9 +104,17 @@
                     <i class="fas fa-coins"></i> Preferred Currency
                 </label>
                 <select id="preferred_currency" name="preferred_currency" class="form-control">
-                    {% for code, name in currencies.items() %}
-                    <option value="{{ code }}" {% if code == 'INR' %}selected{% endif %}>{{ name }} ({{ code }})</option>
-                    {% endfor %}
+                    
+                    <option value="INR" selected>Indian Rupee (INR)</option>
+                    
+                    <option value="USD" >US Dollar (USD)</option>
+                    
+                    <option value="EUR" >Euro (EUR)</option>
+                    
+                    <option value="GBP" >British Pound (GBP)</option>
+                    
+                    <option value="JPY" >Japanese Yen (JPY)</option>
+                    
                 </select>
             </div>
 
@@ -122,4 +150,21 @@
     // Set max date to today for DOB
     document.getElementById('dob').setAttribute('max', new Date().toISOString().split('T')[0]);
 </script>
-{% endblock %}
+
+        </main>
+
+        
+        
+        <footer class="footer">
+            <div class="footer-content footer-center">
+                
+            </div>
+        </footer>
+        
+        
+    </div>
+
+    <script src="/static/js/main.js"></script>
+    
+</body>
+</html>

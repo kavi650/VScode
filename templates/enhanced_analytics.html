@@ -49,9 +49,16 @@
 
         <div class="chart-wrapper">
             <canvas id="analyticsChart" width="800" height="400"></canvas>
+            <div id="chartError" class="error-message" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText">Failed to load analytics data</span>
+            </div>
         </div>
 
-        <div id="loading" class="spinner" style="display: none;"></div>
+        <div id="loading" class="spinner" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading analytics data...</span>
+        </div>
     </div>
 </div>
 
@@ -95,6 +102,34 @@
     max-width: 100%;
     height: auto;
 }
+
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.error-message i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.spinner {
+    text-align: center;
+    padding: 2rem;
+    color: var(--primary-light);
+}
+
+.spinner i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
 </style>
 
 <script>
@@ -117,13 +152,28 @@ async function loadChart(period) {
     
     try {
         const response = await fetch(`/analytics_data/${period}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Hide error message if data loads successfully
+        document.getElementById('chartError').style.display = 'none';
+        document.getElementById('analyticsChart').style.display = 'block';
         
         createChart(data, period);
         updateStats(data, period);
         currentPeriod = period;
     } catch (error) {
         console.error('Error loading analytics data:', error);
+        document.getElementById('chartError').style.display = 'block';
+        document.getElementById('errorText').textContent = `Error: ${error.message}`;
+        document.getElementById('analyticsChart').style.display = 'none';
+        
         // Create sample data for demonstration
         const sampleData = generateSampleData(period);
         createChart(sampleData, period);

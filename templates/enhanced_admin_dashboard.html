@@ -242,11 +242,11 @@
                     </div>
                     <div class="stat-info">
                         <h4>Database</h4>
-                        <p>Healthy</p>
+                        <p>{{ db_health.status }}</p>
                         <div class="stat-bar">
-                            <div class="stat-fill" style="width: 85%"></div>
+                            <div class="stat-fill" style="width: {{ db_health.capacity }}%"></div>
                         </div>
-                        <small>85% capacity</small>
+                        <small>{{ db_health.capacity }}% capacity ({{ db_health.user_count }} users, {{ db_health.transaction_count }} transactions)</small>
                     </div>
                 </div>
                 
@@ -256,11 +256,11 @@
                     </div>
                     <div class="stat-info">
                         <h4>Network</h4>
-                        <p>Excellent</p>
+                        <p>{{ network_health.status }}</p>
                         <div class="stat-bar">
-                            <div class="stat-fill" style="width: 98%"></div>
+                            <div class="stat-fill" style="width: {{ network_health.uptime }}%"></div>
                         </div>
-                        <small>98% uptime</small>
+                        <small>{{ network_health.uptime }}% uptime ({{ network_health.response_time }}ms response)</small>
                     </div>
                 </div>
                 
@@ -270,11 +270,11 @@
                     </div>
                     <div class="stat-info">
                         <h4>Security</h4>
-                        <p>Protected</p>
+                        <p>{{ security_status.status }}</p>
                         <div class="stat-bar">
-                            <div class="stat-fill" style="width: 100%"></div>
+                            <div class="stat-fill" style="width: {% if security_status.status == 'Protected' %}100{% elif security_status.status == 'Alert' %}50{% else %}75{% endif %}%"></div>
                         </div>
-                        <small>All systems secure</small>
+                        <small>{{ security_status.message }}</small>
                     </div>
                 </div>
                 
@@ -284,11 +284,11 @@
                     </div>
                     <div class="stat-info">
                         <h4>Transactions</h4>
-                        <p>Active</p>
+                        <p>{{ transaction_success_rate.status }}</p>
                         <div class="stat-bar">
-                            <div class="stat-fill" style="width: 92%"></div>
+                            <div class="stat-fill" style="width: {{ transaction_success_rate.rate }}%"></div>
                         </div>
-                        <small>92% success rate</small>
+                        <small>{{ transaction_success_rate.rate }}% success rate ({{ transaction_success_rate.successful }}/{{ transaction_success_rate.total }} transactions)</small>
                     </div>
                 </div>
             </div>
@@ -457,12 +457,24 @@ body, html {
     font-size: 0.8rem;
 }
 
-/* Updated Navigation Menu Styles */
+/* Updated Navigation Menu Styles to force 2 rows */
 .admin-nav-enhanced {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
+}
+
+/* New media queries for responsive behavior on smaller screens */
+@media (max-width: 992px) {
+    .admin-nav-enhanced {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .admin-nav-enhanced {
+        grid-template-columns: 1fr;
+    }
 }
 .admin-nav-btn {
     background: linear-gradient(45deg, var(--primary-dark), var(--primary-light));
@@ -759,22 +771,22 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 // Quick action functions
 function viewSystemLogs() {
-    console.log('System logs viewer would be implemented here.');
+    window.location.href = '{{ url_for("system_logs") }}';
 }
 function generateReport() {
     window.location.href = '{{ url_for("transaction_reports") }}';
 }
 function backupDatabase() {
-    console.log('Database backup initiated (feature would be implemented).');
+    window.location.href = '{{ url_for("backup_database") }}';
 }
 function systemMaintenance() {
-    console.log('Maintenance mode feature would be implemented here.');
+    window.location.href = '{{ url_for("maintenance_mode") }}';
 }
 function viewCurrencyRates() {
-    window.location.href = '{{ url_for("multi_currency_dashboard") }}';
+    window.location.href = '{{ url_for("currency_rates") }}';
 }
 function notifyUsers() {
-    console.log('User notification system would be implemented here.');
+    window.location.href = '{{ url_for("notify_users") }}';
 }
 function refreshSystemStats() {
     const btn = document.querySelector('.refresh-btn');

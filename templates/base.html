@@ -17,11 +17,16 @@
                 <i class="fas fa-university"></i>
                 <span>E-Bank</span>
             </div>
-            {% if session.user_account or session.admin_logged_in %}
-            <a href="{{ url_for('logout') }}" class="logout-btn logout-btn-right">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-            {% endif %}
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                {% if session.user_account or session.admin_logged_in %}
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                {% endif %}
+            </div>
         </header>
         {% endif %}
         {% endblock %}

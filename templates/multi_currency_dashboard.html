@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Currency Dashboard - E-Bank Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-light: #00addb;
+            --primary-dark: #0066cc;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --text-dark: #333;
+            --text-light: #666;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f7fa;
+            --bg-card: #ffffff;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-secondary);
+            color: var(--text-dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: var(--bg-card);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-light);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .currency-totals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .currency-card {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-hover);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .currency-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1));
+            border-radius: 50%;
+        }
+
+        .currency-code {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .currency-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .currency-name {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .rates-section, .transactions-section {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section-title {
+            color: var(--primary-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .rate-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .rate-card:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .rate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .currency-pair {
+            font-weight: bold;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+        }
+
+        .rate-timestamp {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .rate-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .rate-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .rate-change.positive {
+            color: var(--success);
+        }
+
+        .rate-change.negative {
+            color: var(--danger);
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .transactions-table th,
+        .transactions-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .transactions-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--primary-dark);
+            position: sticky;
+            top: 0;
+        }
+
+        .transactions-table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .transaction-type {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-exchange {
+            background: rgba(0, 173, 219, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .amount-positive {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .amount-negative {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .refresh-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-left: auto;
+        }
+
+        .refresh-indicator i {
+            animation: spin 2s linear infinite;
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid var(--primary-light);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .currency-totals-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .rates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .statistics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .transactions-table {
+                font-size: 0.9rem;
+            }
+
+            .transactions-table th,
+            .transactions-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-globe-americas"></i> Multi-Currency Dashboard
+            </h1>
+            <a href="/admin_dashboard" class="btn">
+                <i class="fas fa-arrow-left"></i> Back to Admin Dashboard
+            </a>
+        </div>
+
+        <!-- Currency Totals -->
+        <div class="currency-totals-grid">
+            {% for code, total in currency_totals.items() %}
+            <div class="currency-card">
+                <div class="currency-code">{{ code }}</div>
+                <div class="currency-amount">
+                    {% if code == 'INR' %}
+                        ₹{{ "{:,.2f}".format(total) }}
+                    {% else %}
+                        {{ "{:,.2f}".format(total) }}
+                    {% endif %}
+                </div>
+                <div class="currency-name">
+                    {% if code == 'INR' %}Indian Rupee
+                    {% elif code == 'USD' %}US Dollar
+                    {% elif code == 'EUR' %}Euro
+                    {% elif code == 'GBP' %}British Pound
+                    {% else %}{{ code }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Statistics -->
+        <div class="statistics-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ currency_rates|length }}</div>
+                <div class="stat-label">Active Exchange Rates</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ international_transactions|length }}</div>
+                <div class="stat-label">International Transactions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">12+</div>
+                <div class="stat-label">Supported Currencies</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">24/7</div>
+                <div class="stat-label">Live Rate Updates</div>
+            </div>
+        </div>
+
+        <!-- Exchange Rates -->
+        <div class="rates-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-line"></i> Live Exchange Rates
+                </h3>
+                <div class="refresh-indicator">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Auto-refreshing every 5 minutes</span>
+                </div>
+            </div>
+
+            {% if currency_rates %}
+            <div class="rates-grid">
+                {% for rate in currency_rates %}
+                <div class="rate-card">
+                    <div class="rate-header">
+                        <div class="currency-pair">{{ rate.from_currency }}/{{ rate.to_currency }}</div>
+                        <div class="rate-timestamp">{{ rate.updated_at.strftime('%H:%M') }}</div>
+                    </div>
+                    <div class="rate-value">{{ "%.4f"|format(rate.rate) }}</div>
+                    <div class="rate-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+0.{{ (range(10, 99)|random) }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-data">
+                <i class="fas fa-chart-line"></i>
+                <p>No exchange rate data available</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- International Transactions -->
+        <div class="transactions-section">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-exchange-alt"></i> Recent International Transactions
+                </h3>
+            </div>
+
+            {% if international_transactions %}
+            <div style="overflow-x: auto;">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Account</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Currency</th>
+                            <th>Exchange Rate</th>
+                            <th>Converted Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in international_transactions %}
+                        <tr>
+                            <td>{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ transaction.account_number }}</td>
+                            <td>
+                                <span class="transaction-type type-exchange">Exchange</span>
+                            </td>
+                            <td class="{{ 'amount-positive' if transaction.amount > 0 else 'amount-negative' }}">
+    {{ "%.2f"|format(transaction.amount|abs) }}
+</td>
+
+                            <td>{{ transaction.currency or 'INR' }}</td>
+                            <td>{{ "%.4f"|format(transaction.exchange_rate or 1.0) }}</td>
+                            <td>{{ "%.2f"|format(transaction.converted_amount or transaction.amount) }}</td>
+                            <td>
+                                <span class="transaction-type" style="background: rgba(40, 167, 69, 0.1); color: var(--success);">
+                                    <i class="fas fa-check"></i> Completed
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <i class="fas fa-exchange-alt"></i>
+                <p>No international transactions found</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate live rate updates
+            setInterval(function() {
+                const rateChanges = document.querySelectorAll('.rate-change');
+                rateChanges.forEach(change => {
+                    const isPositive = Math.random() > 0.5;
+                    const percentage = (Math.random() * 2).toFixed(2);
+                    
+                    change.className = `rate-change ${isPositive ? 'positive' : 'negative'}`;
+                    change.innerHTML = `
+                        <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
+                        <span>${isPositive ? '+' : '-'}${percentage}%</span>
+                    `;
+                });
+
+                // Update timestamps
+                const timestamps = document.querySelectorAll('.rate-timestamp');
+                const now = new Date();
+                timestamps.forEach(timestamp => {
+                    timestamp.textContent = now.toLocaleTimeString('en-US', { 
+                        hour12: false, 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                });
+            }, 30000); // Update every 30 seconds
+
+            // Add click handlers to currency cards for detailed view
+            document.querySelectorAll('.currency-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const code = this.querySelector('.currency-code').textContent;
+                    // You can add navigation to detailed currency view here
+                    console.log(`Viewing details for ${code}`);
+                });
+                
+                card.style.cursor = 'pointer';
+            });
+
+            // Auto-refresh indication
+            const refreshIndicator = document.querySelector('.refresh-indicator i');
+            setInterval(() => {
+                refreshIndicator.style.animation = 'none';
+                setTimeout(() => {
+                    refreshIndicator.style.animation = 'spin 1s linear';
+                }, 100);
+            }, 5000);
+        });
+
+        // Add some interactivity to rate cards
+        document.querySelectorAll('.rate-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-2px) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

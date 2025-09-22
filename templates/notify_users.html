@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notify Users - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .notification-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .notification-card:hover {
+            transform: translateY(-2px);
+        }
+        .preview-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        .recipient-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .recipient-badge.selected {
+            background: #007bff;
+            color: white;
+        }
+        .template-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .template-card:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        .template-card.selected {
+            border-color: #007bff;
+            background: #e7f3ff;
+        }
+        .char-counter {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .priority-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .priority-high { background: #dc3545; }
+        .priority-medium { background: #ffc107; }
+        .priority-low { background: #28a745; }
+        .history-item {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        .delivery-progress {
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+        .delivery-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-shield-alt"></i> Admin Panel
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-3">User Notifications</span>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Compose Notification -->
+            <div class="col-md-8">
+                <div class="card notification-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-paper-plane"></i> Compose Notification
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="notificationForm" method="POST" action="{{ url_for('send_notification') }}">
+                            <!-- Recipients Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-users"></i> Recipients
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recipient_type" 
+                                                   id="allUsers" value="all" checked onchange="updateRecipients()">
+                                            <label class="form-check-label" for="allUsers">
+                                                All Users
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recipient_type" 
+                                                   id="premiumUsers" value="premium" onchange="updateRecipients()">
+                                            <label class="form-check-label" for="premiumUsers">
+                                                Premium Users
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recipient_type" 
+                                                   id="specificUsers" value="specific" onchange="updateRecipients()">
+                                            <label class="form-check-label" for="specificUsers">
+                                                Specific Users
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="specificUsersDiv" class="mt-3" style="display: none;">
+                                    <label class="form-label">Select Users:</label>
+                                    <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                                        {% for user in users %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="specific_users" 
+                                                   value="{{ user.id }}" id="user{{ user.id }}">
+                                            <label class="form-check-label" for="user{{ user.id }}">
+                                                {{ user.full_name }} ({{ user.mobile }})
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Message Templates -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-template"></i> Message Templates
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="template-card" onclick="selectTemplate('maintenance')">
+                                            <h6><i class="fas fa-tools"></i> Maintenance Alert</h6>
+                                            <small class="text-muted">System maintenance notification</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="template-card" onclick="selectTemplate('promotion')">
+                                            <h6><i class="fas fa-gift"></i> Promotion</h6>
+                                            <small class="text-muted">Special offers and promotions</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="template-card" onclick="selectTemplate('security')">
+                                            <h6><i class="fas fa-shield-alt"></i> Security Alert</h6>
+                                            <small class="text-muted">Security-related notifications</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="template-card" onclick="selectTemplate('custom')">
+                                            <h6><i class="fas fa-edit"></i> Custom Message</h6>
+                                            <small class="text-muted">Write your own message</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Message Content -->
+                            <div class="mb-4">
+                                <label for="messageTitle" class="form-label fw-bold">
+                                    <i class="fas fa-heading"></i> Message Title
+                                </label>
+                                <input type="text" class="form-control" id="messageTitle" name="title" 
+                                       placeholder="Enter notification title" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="messageContent" class="form-label fw-bold">
+                                    <i class="fas fa-message"></i> Message Content
+                                </label>
+                                <textarea class="form-control" id="messageContent" name="content" rows="5" 
+                                          placeholder="Enter your message here..." required 
+                                          oninput="updateCharCounter()"></textarea>
+                                <div class="text-end mt-1">
+                                    <span id="charCounter" class="char-counter">0 characters</span>
+                                </div>
+                            </div>
+
+                            <!-- Priority and Type -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-flag"></i> Priority
+                                    </label>
+                                    <select class="form-select" name="priority">
+                                        <option value="low"><span class="priority-indicator priority-low"></span>Low</option>
+                                        <option value="medium" selected><span class="priority-indicator priority-medium"></span>Medium</option>
+                                        <option value="high"><span class="priority-indicator priority-high"></span>High</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-bell"></i> Notification Type
+                                    </label>
+                                    <select class="form-select" name="type">
+                                        <option value="info">Information</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="alert">Alert</option>
+                                        <option value="promotion">Promotion</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Send Options -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-paper-plane"></i> Send Via
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="send_email" checked>
+                                            <label class="form-check-label">
+                                                <i class="fas fa-envelope"></i> Email
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="send_sms">
+                                            <label class="form-check-label">
+                                                <i class="fas fa-sms"></i> SMS
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="send_push" checked>
+                                            <label class="form-check-label">
+                                                <i class="fas fa-mobile-alt"></i> Push Notification
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-eye"></i> Preview
+                                </label>
+                                <div class="preview-card p-3">
+                                    <h6 id="previewTitle">Your notification title will appear here</h6>
+                                    <p id="previewContent" class="mb-0">Your message content will appear here...</p>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane"></i> Send Notification
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="col-md-4">
+                <!-- Notification Stats -->
+                <div class="card notification-card stats-card">
+                    <div class="card-body text-center">
+                        <h5><i class="fas fa-chart-bar"></i> Notification Stats</h5>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <h3>{{ stats.total_sent }}</h3>
+                                <small>Total Sent</small>
+                            </div>
+                            <div class="col-6">
+                                <h3>{{ stats.delivered }}</h3>
+                                <small>Delivered</small>
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar bg-light" style="width: {{ stats.delivery_rate }}%"></div>
+                        </div>
+                        <small class="mt-2 d-block">{{ stats.delivery_rate }}% Delivery Rate</small>
+                    </div>
+                </div>
+
+                <!-- Recent Notifications -->
+                <div class="card notification-card">
+                    <div class="card-header bg-dark text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-history"></i> Recent Notifications
+                        </h6>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        {% if recent_notifications %}
+                            {% for notification in recent_notifications %}
+                            <div class="history-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ notification.title }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ notification.sent_at }}</small>
+                                        <br>
+                                        <span class="badge bg-{{ 'danger' if notification.priority == 'high' else 'warning' if notification.priority == 'medium' else 'success' }}">
+                                            {{ notification.priority }}
+                                        </span>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted">{{ notification.recipients }}</small>
+                                        <br>
+                                        <span class="badge bg-info">{{ notification.type }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                                <p>No recent notifications</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Templates -->
+                <div class="card notification-card">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-lightbulb"></i> Quick Templates
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <button class="list-group-item list-group-item-action" onclick="useQuickTemplate('system_update')">
+                                <i class="fas fa-wrench"></i> System Update
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="useQuickTemplate('security_alert')">
+                                <i class="fas fa-shield-alt"></i> Security Alert
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="useQuickTemplate('promotion')">
+                                <i class="fas fa-gift"></i> New Promotion
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="useQuickTemplate('holiday')">
+                                <i class="fas fa-calendar"></i> Holiday Notice
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Template data
+        const templates = {
+            maintenance: {
+                title: 'System Maintenance Notice',
+                content: 'Our system will undergo scheduled maintenance on [DATE] from [TIME]. During this period, some services may be temporarily unavailable. We apologize for any inconvenience.',
+                priority: 'medium',
+                type: 'warning'
+            },
+            promotion: {
+                title: 'Special Offer Alert',
+                content: 'Exciting news! We have a special promotion running from [START_DATE] to [END_DATE]. Enjoy exclusive benefits and discounts. Visit our app to learn more!',
+                priority: 'low',
+                type: 'promotion'
+            },
+            security: {
+                title: 'Security Update Required',
+                content: 'For your account security, please update your password and enable two-factor authentication. Your security is our top priority.',
+                priority: 'high',
+                type: 'alert'
+            },
+            custom: {
+                title: '',
+                content: '',
+                priority: 'medium',
+                type: 'info'
+            }
+        };
+
+        function updateRecipients() {
+            const specificUsersDiv = document.getElementById('specificUsersDiv');
+            const specificUsersRadio = document.getElementById('specificUsers');
+            
+            if (specificUsersRadio.checked) {
+                specificUsersDiv.style.display = 'block';
+            } else {
+                specificUsersDiv.style.display = 'none';
+            }
+        }
+
+        function selectTemplate(templateType) {
+            // Remove previous selections
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            event.target.closest('.template-card').classList.add('selected');
+            
+            // Fill form with template data
+            const template = templates[templateType];
+            if (template) {
+                document.getElementById('messageTitle').value = template.title;
+                document.getElementById('messageContent').value = template.content;
+                document.querySelector('select[name="priority"]').value = template.priority;
+                document.querySelector('select[name="type"]').value = template.type;
+                
+                updatePreview();
+                updateCharCounter();
+            }
+        }
+
+        function updatePreview() {
+            const title = document.getElementById('messageTitle').value;
+            const content = document.getElementById('messageContent').value;
+            
+            document.getElementById('previewTitle').textContent = title || 'Your notification title will appear here';
+            document.getElementById('previewContent').textContent = content || 'Your message content will appear here...';
+        }
+
+        function updateCharCounter() {
+            const content = document.getElementById('messageContent').value;
+            document.getElementById('charCounter').textContent = content.length + ' characters';
+        }
+
+        function useQuickTemplate(templateType) {
+            const quickTemplates = {
+                system_update: {
+                    title: 'System Update Complete',
+                    content: 'Our system has been successfully updated with new features and improvements. Check out what\'s new!',
+                    priority: 'low',
+                    type: 'info'
+                },
+                security_alert: {
+                    title: 'Security Alert: Suspicious Activity',
+                    content: 'We have detected unusual login activity on your account. Please review your recent login history and update your password if necessary.',
+                    priority: 'high',
+                    type: 'alert'
+                },
+                promotion: {
+                    title: 'Limited Time Offer: 20% Cashback',
+                    content: 'Get 20% cashback on all transactions above ₹500 this weekend. Offer valid until Sunday midnight!',
+                    priority: 'low',
+                    type: 'promotion'
+                },
+                holiday: {
+                    title: 'Holiday Banking Hours',
+                    content: 'Please note our adjusted banking hours for the upcoming holiday. Online services remain available 24/7.',
+                    priority: 'medium',
+                    type: 'info'
+                }
+            };
+
+            const template = quickTemplates[templateType];
+            if (template) {
+                document.getElementById('messageTitle').value = template.title;
+                document.getElementById('messageContent').value = template.content;
+                document.querySelector('select[name="priority"]').value = template.priority;
+                document.querySelector('select[name="type"]').value = template.type;
+                
+                updatePreview();
+                updateCharCounter();
+            }
+        }
+
+        // Form submission
+        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // Validate specific users selection if chosen
+            const recipientType = formData.get('recipient_type');
+            if (recipientType === 'specific') {
+                const specificUsers = formData.getAll('specific_users');
+                if (specificUsers.length === 0) {
+                    alert('Please select at least one user when using specific recipients.');
+                    return;
+                }
+            }
+            
+            // Simulate sending
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                alert('Notification sent successfully!');
+                this.reset();
+                updatePreview();
+                updateCharCounter();
+            }, 2000);
+        });
+
+        // Real-time preview updates
+        document.getElementById('messageTitle').addEventListener('input', updatePreview);
+        document.getElementById('messageContent').addEventListener('input', updatePreview);
+
+        // Initialize
+        updatePreview();
+        updateCharCounter();
+    </script>
+</body>
+</html>

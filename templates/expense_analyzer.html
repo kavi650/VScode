@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block title %}Expense Analyzer - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1><i class="fas fa-chart-pie"></i> Expense Analyzer</h1>
+                <p>Deep dive into spending patterns and identify areas for improvement</p>
+            </div>
+            <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+                <i class="fas fa-home"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Expense Overview</h3>
+                    <div class="date-filter">
+                        <select class="form-control" id="timePeriod" onchange="updateAnalysis()">
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="year">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Spending by Category</h3>
+                </div>
+                <div class="card-body">
+                    <div id="categoryBreakdown">
+                        <!-- Category breakdown will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Recent Transactions</h3>
+                </div>
+                <div class="card-body">
+                    <div id="recentTransactions">
+                        <!-- Recent transactions will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Spending Insights</h3>
+                </div>
+                <div class="card-body">
+                    <div id="spendingInsights">
+                        <!-- Insights will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Budget vs Actual</h3>
+                </div>
+                <div class="card-body">
+                    <div id="budgetComparison">
+                        <!-- Budget comparison will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-primary btn-block mb-2" onclick="exportAnalysis()">
+                        <i class="fas fa-download"></i> Export Analysis
+                    </button>
+                    <button class="btn btn-outline-success btn-block mb-2" onclick="setBudgetAlerts()">
+                        <i class="fas fa-bell"></i> Set Budget Alerts
+                    </button>
+                    <button class="btn btn-outline-info btn-block" onclick="viewTrends()">
+                        <i class="fas fa-trending-up"></i> View Trends
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.date-filter {
+    float: right;
+    width: 150px;
+}
+
+.chart-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.category-item:last-child {
+    border-bottom: none;
+}
+
+.category-name {
+    font-weight: 500;
+}
+
+.category-amount {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.category-percentage {
+    font-size: 12px;
+    color: #666;
+}
+
+.insight-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-left: 4px solid #007bff;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.insight-warning {
+    border-left-color: #ffc107;
+    background: #fff3cd;
+}
+
+.insight-danger {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+.insight-success {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-details {
+    flex: 1;
+}
+
+.transaction-category {
+    font-size: 12px;
+    color: #666;
+}
+
+.transaction-amount {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.budget-progress {
+    margin-bottom: 15px;
+}
+
+.budget-category {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.navigation-buttons {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Sample data for demonstration (in rupees)
+let expenseData = {
+    categories: [
+        { name: 'Housing', amount: 45000, budget: 48000, color: '#FF6384' },
+        { name: 'Food', amount: 16500, budget: 18000, color: '#36A2EB' },
+        { name: 'Transportation', amount: 12000, budget: 13000, color: '#FFCE56' },
+        { name: 'Entertainment', amount: 6500, budget: 7500, color: '#4BC0C0' },
+        { name: 'Utilities', amount: 5500, budget: 6000, color: '#9966FF' },
+        { name: 'Shopping', amount: 10500, budget: 9500, color: '#FF9F40' },
+        { name: 'Healthcare', amount: 3200, budget: 3500, color: '#FF6384' },
+        { name: 'Other', amount: 4800, budget: 5500, color: '#C9CBCF' }
+    ],
+    recentTransactions: [
+        { date: '2024-01-15', description: 'Grocery Store', category: 'Food', amount: -3150 },
+        { date: '2024-01-14', description: 'Petrol Station', category: 'Transportation', amount: -1650 },
+        { date: '2024-01-14', description: 'Electric Bill', category: 'Utilities', amount: -2850 },
+        { date: '2024-01-13', description: 'Restaurant', category: 'Food', amount: -1250 },
+        { date: '2024-01-13', description: 'Online Shopping', category: 'Shopping', amount: -2100 }
+    ]
+};
+
+let expenseChart;
+
+function initializeChart() {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    
+    expenseChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: expenseData.categories.map(cat => cat.name),
+            datasets: [{
+                data: expenseData.categories.map(cat => cat.amount),
+                backgroundColor: expenseData.categories.map(cat => cat.color),
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#007bff',
+                    borderWidth: 1,
+                    cornerRadius: 6,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            const category = expenseData.categories[context.dataIndex];
+                            const percentage = ((category.amount / getTotalExpenses()) * 100).toFixed(1);
+                            return `${category.name}: ₹${category.amount.toLocaleString()} (${percentage}%)`;
+                        },
+                        afterLabel: function(context) {
+                            const category = expenseData.categories[context.dataIndex];
+                            const budgetStatus = category.amount > category.budget ? 'Over Budget' : 'Within Budget';
+                            return `Budget: ₹${category.budget.toLocaleString()} (${budgetStatus})`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%',
+            animation: {
+                animateRotate: true,
+                duration: 1500
+            }
+        }
+    });
+}
+
+function getTotalExpenses() {
+    return expenseData.categories.reduce((total, cat) => total + cat.amount, 0);
+}
+
+function loadCategoryBreakdown() {
+    const breakdownContainer = document.getElementById('categoryBreakdown');
+    const totalExpenses = getTotalExpenses();
+
+    breakdownContainer.innerHTML = expenseData.categories.map(category => {
+        const percentage = (category.amount / totalExpenses) * 100;
+        const budgetStatus = category.amount > category.budget ? 'over-budget' : 'within-budget';
+        const statusClass = category.amount > category.budget ? 'text-danger' : 'text-success';
+        
+        return `
+            <div class="category-item">
+                <div>
+                    <div class="category-name">${category.name}</div>
+                    <div class="category-percentage">${percentage.toFixed(1)}% of total</div>
+                </div>
+                <div class="text-right">
+                    <div class="category-amount">₹${category.amount.toLocaleString()}</div>
+                    <div class="small ${statusClass}">
+                        Budget: ₹${category.budget.toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function loadRecentTransactions() {
+    const transactionsContainer = document.getElementById('recentTransactions');
+    
+    transactionsContainer.innerHTML = expenseData.recentTransactions.map(transaction => {
+        return `
+            <div class="transaction-item">
+                <div class="transaction-details">
+                    <div><strong>${transaction.description}</strong></div>
+                    <div class="transaction-category">${transaction.category} • ${transaction.date}</div>
+                </div>
+                <div class="transaction-amount">₹${Math.abs(transaction.amount).toLocaleString()}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function loadSpendingInsights() {
+    const insightsContainer = document.getElementById('spendingInsights');
+    const totalExpenses = getTotalExpenses();
+    const totalBudget = expenseData.categories.reduce((total, cat) => total + cat.budget, 0);
+    
+    const insights = [];
+    
+    // Overall budget status
+    if (totalExpenses > totalBudget) {
+        insights.push({
+            type: 'danger',
+            message: `You're ₹${(totalExpenses - totalBudget).toLocaleString()} over your total budget this month!`
+        });
+    } else {
+        insights.push({
+            type: 'success',
+            message: `Great! You're ₹${(totalBudget - totalExpenses).toLocaleString()} under your total budget.`
+        });
+    }
+    
+    // Category-specific insights
+    expenseData.categories.forEach(category => {
+        if (category.amount > category.budget) {
+            insights.push({
+                type: 'warning',
+                message: `${category.name} is over budget by ₹${(category.amount - category.budget).toLocaleString()}`
+            });
+        }
+    });
+    
+    // Highest spending category
+    const highestCategory = expenseData.categories.reduce((max, cat) => 
+        cat.amount > max.amount ? cat : max
+    );
+    insights.push({
+        type: 'info',
+        message: `${highestCategory.name} is your highest spending category at ₹${highestCategory.amount.toLocaleString()}`
+    });
+    
+    insightsContainer.innerHTML = insights.map(insight => {
+        const className = `insight-${insight.type}`;
+        return `<div class="insight-item ${className}">${insight.message}</div>`;
+    }).join('');
+}
+
+function loadBudgetComparison() {
+    const comparisonContainer = document.getElementById('budgetComparison');
+    
+    comparisonContainer.innerHTML = expenseData.categories.map(category => {
+        const percentage = (category.amount / category.budget) * 100;
+        const progressClass = percentage > 100 ? 'bg-danger' : percentage > 80 ? 'bg-warning' : 'bg-success';
+        
+        return `
+            <div class="budget-progress">
+                <div class="budget-category">
+                    <span>${category.name}</span>
+                    <span>₹${category.amount.toLocaleString()} / ₹${category.budget.toLocaleString()}</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar ${progressClass}" role="progressbar" 
+                         style="width: ${Math.min(percentage, 100)}%">
+                        ${percentage.toFixed(0)}%
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateAnalysis() {
+    // This function would update the analysis based on the selected time period
+    // For now, we'll just reload the current data
+    loadCategoryBreakdown();
+    loadSpendingInsights();
+    loadBudgetComparison();
+    
+    if (expenseChart) {
+        expenseChart.update();
+    }
+}
+
+function exportAnalysis() {
+    const analysisData = {
+        categories: expenseData.categories,
+        totalExpenses: getTotalExpenses(),
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(analysisData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'expense_analysis.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    alert('Analysis exported successfully!');
+}
+
+function setBudgetAlerts() {
+    alert('Budget alerts functionality will be implemented soon!');
+}
+
+function viewTrends() {
+    alert('Detailed trends view will be implemented soon!');
+}
+
+// Initialize everything when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChart();
+    loadCategoryBreakdown();
+    loadRecentTransactions();
+    loadSpendingInsights();
+    loadBudgetComparison();
+});
+</script>
+{% endblock %}

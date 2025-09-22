@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Rates - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .currency-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .currency-card:hover {
+            transform: translateY(-5px);
+        }
+        .currency-flag {
+            width: 40px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+        .rate-change {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .rate-up { color: #28a745; }
+        .rate-down { color: #dc3545; }
+        .rate-neutral { color: #6c757d; }
+        .exchange-calculator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+        }
+        .converter-input {
+            border-radius: 10px;
+            border: none;
+            padding: 12px 15px;
+            font-size: 1.1em;
+        }
+        .rate-timestamp {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .trend-indicator {
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .currency-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .table-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .refresh-btn {
+            border-radius: 10px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-shield-alt"></i> Admin Panel
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-3">Currency Exchange Rates</span>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Currency Rates Table -->
+                <div class="card currency-card">
+                    <div class="card-header bg-dark text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-globe"></i> Current Exchange Rates
+                            </h5>
+                            <button class="btn btn-light btn-sm refresh-btn" onclick="refreshRates()">
+                                <i class="fas fa-sync-alt"></i> Refresh Rates
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th>Currency</th>
+                                        <th>Rate (vs INR)</th>
+                                        <th>Change</th>
+                                        <th>Trend</th>
+                                        <th>Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for currency_code, currency_data in currencies.items() %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="currency-flag">
+                                                    {% if currency_code == 'INR' %}🇮🇳{% endif %}
+                                                    {% if currency_code == 'USD' %}🇺🇸{% endif %}
+                                                    {% if currency_code == 'EUR' %}🇪🇺{% endif %}
+                                                    {% if currency_code == 'GBP' %}🇬🇧{% endif %}
+                                                    {% if currency_code == 'JPY' %}🇯🇵{% endif %}
+                                                </div>
+                                                <div>
+                                                    <strong>{{ currency_code }}</strong><br>
+                                                    <small class="text-muted">{{ currency_data.symbol }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{{ currency_data.rate }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="rate-change {% if currency_data.change > 0 %}rate-up{% elif currency_data.change < 0 %}rate-down{% else %}rate-neutral{% endif %}">
+                                                {% if currency_data.change > 0 %}+{% endif %}{{ currency_data.change }}
+                                                <i class="fas {% if currency_data.change > 0 %}fa-arrow-up{% elif currency_data.change < 0 %}fa-arrow-down{% else %}fa-minus{% endif %}"></i>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="trend-indicator">
+                                                {% if currency_data.change > 0.001 %}
+                                                    <i class="fas fa-chart-line text-success"></i>
+                                                {% elif currency_data.change < -0.001 %}
+                                                    <i class="fas fa-chart-line text-danger" style="transform: rotate(180deg);"></i>
+                                                {% else %}
+                                                    <i class="fas fa-minus text-secondary"></i>
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="rate-timestamp">Just now</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rate History Chart Placeholder -->
+                <div class="card currency-card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i> 7-Day Rate History (USD/INR)
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Rate History Chart</h6>
+                            <p class="text-muted">Interactive chart showing currency rate trends over the past 7 days</p>
+                            <small class="text-muted">Chart implementation would go here</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Currency Converter -->
+                <div class="card currency-card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-calculator"></i> Currency Converter
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="exchange-calculator">
+                            <div class="mb-3">
+                                <label for="fromAmount" class="form-label">Amount</label>
+                                <input type="number" id="fromAmount" class="form-control converter-input" 
+                                       value="100" oninput="convertCurrency()">
+                            </div>
+                            <div class="mb-3">
+                                <label for="fromCurrency" class="form-label">From</label>
+                                <select id="fromCurrency" class="form-select converter-input" onchange="convertCurrency()">
+                                    {% for currency_code, currency_data in currencies.items() %}
+                                    <option value="{{ currency_code }}" {% if currency_code == 'INR' %}selected{% endif %}>
+                                        {{ currency_code }} ({{ currency_data.symbol }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="toCurrency" class="form-label">To</label>
+                                <select id="toCurrency" class="form-select converter-input" onchange="convertCurrency()">
+                                    {% for currency_code, currency_data in currencies.items() %}
+                                    <option value="{{ currency_code }}" {% if currency_code == 'USD' %}selected{% endif %}>
+                                        {{ currency_code }} ({{ currency_data.symbol }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="text-center">
+                                <h5 class="mb-0">Result: <span id="result">1.20</span></h5>
+                                <small class="opacity-75">Exchange rates may vary</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rate Alerts -->
+                <div class="card currency-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-bell"></i> Rate Alerts
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="alertCurrency" class="form-label">Currency Pair</label>
+                            <select id="alertCurrency" class="form-select">
+                                <option value="USD/INR">USD/INR</option>
+                                <option value="EUR/INR">EUR/INR</option>
+                                <option value="GBP/INR">GBP/INR</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="alertRate" class="form-label">Target Rate</label>
+                            <input type="number" id="alertRate" class="form-control" placeholder="0.012" step="0.001">
+                        </div>
+                        <button class="btn btn-warning w-100" onclick="setAlert()">
+                            <i class="fas fa-bell"></i> Set Alert
+                        </button>
+                        
+                        <hr>
+                        
+                        <h6 class="text-muted">Active Alerts</h6>
+                        <div class="text-center py-3">
+                            <i class="fas fa-bell-slash text-muted"></i>
+                            <small class="text-muted d-block">No active rate alerts</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card currency-card">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-bolt"></i> Quick Actions
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="exportRates()">
+                                <i class="fas fa-download"></i> Export Rates
+                            </button>
+                            <button class="btn btn-outline-success" onclick="updateRates()">
+                                <i class="fas fa-sync-alt"></i> Update Rates
+                            </button>
+                            <button class="btn btn-outline-info" onclick="viewHistory()">
+                                <i class="fas fa-history"></i> View History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Currency conversion function
+        function convertCurrency() {
+            const fromAmount = parseFloat(document.getElementById('fromAmount').value) || 0;
+            const fromCurrency = document.getElementById('fromCurrency').value;
+            const toCurrency = document.getElementById('toCurrency').value;
+            
+            // Get exchange rates from the currencies object
+            const currencies = {{ currencies|tojson }};
+            const fromRate = currencies[fromCurrency].rate;
+            const toRate = currencies[toCurrency].rate;
+            
+            // Convert to INR first, then to target currency
+            const inrAmount = fromAmount / fromRate;
+            const result = inrAmount * toRate;
+            
+            document.getElementById('result').textContent = result.toFixed(4);
+        }
+
+        function refreshRates() {
+            // Simulate rate refresh
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('Exchange rates refreshed successfully!');
+            }, 2000);
+        }
+
+        function setAlert() {
+            const currency = document.getElementById('alertCurrency').value;
+            const rate = document.getElementById('alertRate').value;
+            
+            if (!rate) {
+                alert('Please enter a target rate');
+                return;
+            }
+            
+            alert(`Rate alert set for ${currency} at ${rate}`);
+        }
+
+        function exportRates() {
+            alert('Export functionality would be implemented here');
+        }
+
+        function updateRates() {
+            alert('Manual rate update functionality would be implemented here');
+        }
+
+        function viewHistory() {
+            alert('Rate history view would be implemented here');
+        }
+
+        // Initialize converter on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            convertCurrency();
+        });
+
+        // Auto-refresh every 60 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 60000);
+    </script>
+</body>
+</html>

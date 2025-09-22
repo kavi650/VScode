@@ -5,12 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Bank - Welcome</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}">
     <style>
-        body {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
-            min-height: 100vh;
+        :root {
+            --primary-dark: #0053ba;
+            --primary-light: #00addb;
+            --background: #ffffff;
+            --light-gray: #f8f9fa;
+            --secondary: #ffc107;
+            --bg-color: #f4f7f9;
+            --card-bg: #fff;
+            --text-color: #333;
+            --border-color: #ddd;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        .header-section {
+            width: 100%;
+            padding: 3rem 2rem 5rem;
+            background: linear-gradient(to bottom, var(--primary-dark), var(--primary-light));
+            text-align: center;
+            color: #fff;
+            position: relative;
+            border-bottom-left-radius: 50% 20%;
+            border-bottom-right-radius: 50% 20%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: headerFadeIn 1s ease-out forwards;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes headerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-section {
+            animation: welcomeFadeIn 1s ease-out forwards;
+            animation-delay: 0.5s;
+            opacity: 0;
+        }
+
+        @keyframes welcomeFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .welcome-section p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .message-container {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 1.5rem;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            text-align: center;
+        }
+
         .verification-notice {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -22,6 +122,7 @@
             align-items: center;
             gap: 0.5rem;
         }
+
         .resend-verification {
             background: #ffc107;
             color: #000;
@@ -34,143 +135,186 @@
             margin-top: 0.5rem;
             display: inline-block;
         }
-        .success-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-        }
-        .error-message {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-}
 
+        .login-section {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 2rem;
+            width: 90%;
+            max-width: 900px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: cardFadeIn 0.8s ease-out forwards;
+            flex: 1;
+        }
+
+        .login-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-card h3 {
+            text-align: center;
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+        }
+
+        .btn {
+            background-color: var(--primary-dark);
+            color: #fff;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 51, 102, 0.2);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
-    <div class="landing-container">
-        <div>
-            <div class="welcome-section">
-                <h1><i class="fas fa-university"></i> E-Bank</h1>
-                <p>Your Modern Banking Solution</p>
-                <p>🌟 New Features:</p>
-                <p>✓ Email Verification • ✓ Split Payments • ✓ International Transfers • ✓ Enhanced Security</p>
-            </div>
+    <div class="header-section">
+        <div class="welcome-section">
+            <h1><i class="fas fa-university"></i> E-Bank</h1>
+            <p>Your Modern Banking Solution</p>
+        </div>
+    </div>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <div class="login-section">
-                <!-- Admin Login Card -->
-                <div class="login-card">
-                    <h3><i class="fas fa-user-shield"></i> Admin Login</h3>
-                    {% if admin_error %}
-                    <div class="error-message">{{ admin_error }}</div>
-                    {% endif %}
-                    <form method="POST" action="{{ url_for('admin_login') }}">
-                        <div class="form-group">
-                            <label for="admin-username">Username</label>
-                            <input type="text" id="admin-username" name="username" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="admin-password">Password</label>
-                            <input type="password" id="admin-password" name="password" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn" style="width: 100%;">
-                            <i class="fas fa-sign-in-alt"></i> Login as Admin
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Enhanced Customer Login Card -->
-                <div class="login-card">
-                    <h3><i class="fas fa-user"></i> Customer Login</h3>
-                    {% if user_error %}
-                    <div class="error-message">{{ user_error }}</div>
-                    {% if show_resend %}
-                    <div class="verification-notice">
-                        <i class="fas fa-envelope"></i>
-                        <div>
-                            <p style="margin: 0;">Email verification required</p>
-                            <a href="{{ url_for('resend_verification', email=user_email) }}" class="resend-verification">
-                                <i class="fas fa-paper-plane"></i> Resend Verification Email
-                            </a>
-                        </div>
+    <!-- Moved success/error messages above login cards -->
+    <div class="message-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">
+                        {{ message }}
                     </div>
-                    {% endif %}
-                    {% endif %}
-                    <form method="POST" action="{{ url_for('user_login') }}">
-                        <div class="form-group">
-                            <label for="user-email">Email Address</label>
-                            <input type="email" id="user-email" name="email" class="form-control" 
-                                   placeholder="Enter your email address" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="user-mobile">Mobile Number</label>
-                            <input type="tel" id="user-mobile" name="mobile" class="form-control" 
-                                   pattern="[0-9]{10}" placeholder="Enter 10-digit mobile number" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="user-pin">4-Digit PIN</label>
-                            <input type="password" id="user-pin" name="pin" class="form-control" 
-                                   pattern="[0-9]{4}" maxlength="4" placeholder="Enter 4-digit PIN" required>
-                        </div>
-                        <button type="submit" class="btn" style="width: 100%;">
-                            <i class="fas fa-sign-in-alt"></i> Login to Account
-                        </button>
-                        <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem; color: #666;">
-                            <i class="fas fa-shield-alt"></i> Secure login with email verification
-                        </p>
-                    </form>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="login-section">
+        <!-- Admin Login Card -->
+        <div class="login-card">
+            <h3><i class="fas fa-user-shield"></i> Admin Login</h3>
+            {% if admin_error %}
+            <div class="error-message">{{ admin_error }}</div>
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin_login') }}">
+                <div class="form-group">
+                    <label for="admin-username">Username</label>
+                    <input type="text" id="admin-username" name="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Login as Admin
+                </button>
+            </form>
+        </div>
+
+        <!-- Customer Login Card -->
+        <div class="login-card">
+            <h3><i class="fas fa-user"></i> Customer Login</h3>
+            {% if user_error %}
+            <div class="error-message">{{ user_error }}</div>
+            {% if show_resend %}
+            <div class="verification-notice">
+                <i class="fas fa-envelope"></i>
+                <div>
+                    <p style="margin: 0;">Email verification required</p>
+                    <a href="{{ url_for('resend_verification', email=user_email) }}" class="resend-verification">
+                        <i class="fas fa-paper-plane"></i> Resend Verification Email
+                    </a>
                 </div>
             </div>
-
-            <!-- Features Section -->
-            <div style="background: rgba(255,255,255,0.95); margin: 2rem 0; padding: 2rem; border-radius: 15px;">
-                <h3 style="text-align: center; color: var(--primary-dark); margin-bottom: 2rem;">
-                    <i class="fas fa-star"></i> Enhanced Features
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                    <div style="text-align: center; padding: 1rem;">
-                        <i class="fas fa-users" style="font-size: 2rem; color: var(--primary-light); margin-bottom: 0.5rem;"></i>
-                        <h4 style="color: var(--primary-dark);">Split Payments</h4>
-                        <p style="color: #666; font-size: 0.9rem;">Divide expenses among friends with QR codes</p>
-                    </div>
-                    <div style="text-align: center; padding: 1rem;">
-                        <i class="fas fa-globe" style="font-size: 2rem; color: var(--primary-light); margin-bottom: 0.5rem;"></i>
-                        <h4 style="color: var(--primary-dark);">International Transfers</h4>
-                        <p style="color: #666; font-size: 0.9rem;">Send money globally with live exchange rates</p>
-                    </div>
-                    <div style="text-align: center; padding: 1rem;">
-                        <i class="fas fa-robot" style="font-size: 2rem; color: var(--primary-light); margin-bottom: 0.5rem;"></i>
-                        <h4 style="color: var(--primary-dark);">Smart Assistant</h4>
-                        <p style="color: #666; font-size: 0.9rem;">Advanced chatbot with comprehensive banking help</p>
-                    </div>
-                    <div style="text-align: center; padding: 1rem;">
-                        <i class="fas fa-chart-pie" style="font-size: 2rem; color: var(--primary-light); margin-bottom: 0.5rem;"></i>
-                        <h4 style="color: var(--primary-dark);">Visual Analytics</h4>
-                        <p style="color: #666; font-size: 0.9rem;">Interactive pie charts and spending insights</p>
-                    </div>
+            {% endif %}
+            {% endif %}
+            <form method="POST" action="{{ url_for('user_login') }}">
+                <div class="form-group">
+                    <label for="user-email">Email Address</label>
+                    <input type="email" id="user-email" name="email" class="form-control" 
+                            placeholder="Enter your email address" required>
                 </div>
-            </div>
+                <div class="form-group">
+                    <label for="user-mobile">Mobile Number</label>
+                    <input type="tel" id="user-mobile" name="mobile" class="form-control" 
+                            pattern="[0-9]{10}" placeholder="Enter 10-digit mobile number" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-pin">4-Digit PIN</label>
+                    <input type="password" id="user-pin" name="pin" class="form-control" 
+                            pattern="[0-9]{4}" maxlength="4" placeholder="Enter 4-digit PIN" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Login to Account
+                </button>
+                <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                    <i class="fas fa-shield-alt"></i> Secure login with email verification
+                </p>
+            </form>
         </div>
     </div>
 
     <script>
-        // Enhanced form validation
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.login-card');
             cards.forEach((card, index) => {
@@ -178,17 +322,14 @@
             });
         });
 
-        // PIN input validation
         document.getElementById('user-pin').addEventListener('input', function(e) {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Mobile number validation
         document.getElementById('user-mobile').addEventListener('input', function(e) {
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Email validation feedback
         document.getElementById('user-email').addEventListener('blur', function(e) {
             const email = this.value;
             if (email && !email.includes('@')) {

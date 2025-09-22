@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}Investment Tracker - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-chart-line"></i> Investment Tracker</h1>
+            <p>Track your investment portfolio and monitor performance</p>
+        </div>
+        <a href="{{ url_for('enhanced_customer_dashboard') }}" class="btn btn-blue btn-right">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Portfolio Overview</h3>
+                    <div class="portfolio-value">
+                        <span class="portfolio-total">₹125,430.50</span>
+                        <span class="portfolio-change positive">+2.4% (+₹2,940.20)</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="portfolioChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Holdings</h3>
+                    <button class="btn btn-outline-primary btn-sm" onclick="addInvestment()">
+                        <i class="fas fa-plus"></i> Add Investment
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="holdingsList">
+                        <!-- Holdings will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Performance Analysis</h3>
+                </div>
+                <div class="card-body">
+                    <div id="performanceAnalysis">
+                        <!-- Performance analysis will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Portfolio Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="summary-item">
+                        <h6>Total Invested</h6>
+                        <p class="summary-value">₹118,200.00</p>
+                    </div>
+                    <div class="summary-item">
+                        <h6>Current Value</h6>
+                        <p class="summary-value">₹125,430.50</p>
+                    </div>
+                    <div class="summary-item">
+                        <h6>Total Gain/Loss</h6>
+                        <p class="summary-value text-success">+₹7,230.50</p>
+                    </div>
+                    <div class="summary-item">
+                        <h6>Return %</h6>
+                        <p class="summary-value text-success">+6.12%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Asset Allocation</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="allocationChart" width="300" height="300"></canvas>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Market News</h3>
+                </div>
+                <div class="card-body">
+                    <div id="marketNews">
+                        <!-- Market news will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-primary btn-block mb-2" onclick="rebalancePortfolio()">
+                        <i class="fas fa-balance-scale"></i> Rebalance Portfolio
+                    </button>
+                    <button class="btn btn-outline-success btn-block mb-2" onclick="exportPortfolio()">
+                        <i class="fas fa-download"></i> Export Portfolio
+                    </button>
+                    <button class="btn btn-outline-info btn-block" onclick="viewReports()">
+                        <i class="fas fa-file-alt"></i> View Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.portfolio-value {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.portfolio-total {
+    font-size: 32px;
+    font-weight: bold;
+    color: #28a745;
+    display: block;
+}
+
+.portfolio-change {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.portfolio-change.positive {
+    color: #28a745;
+}
+
+.portfolio-change.negative {
+    color: #dc3545;
+}
+
+.summary-item {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.summary-value {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.holding-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+}
+
+.holding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.holding-symbol {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.holding-name {
+    font-size: 14px;
+    color: #666;
+}
+
+.holding-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.holding-value {
+    font-weight: bold;
+}
+
+.holding-change {
+    font-weight: 500;
+}
+
+.holding-change.positive {
+    color: #28a745;
+}
+
+.holding-change.negative {
+    color: #dc3545;
+}
+
+.performance-metric {
+    text-align: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.performance-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.performance-label {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.news-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.news-item:last-child {
+    border-bottom: none;
+}
+
+.news-title {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.news-time {
+    font-size: 12px;
+    color: #666;
+}
+
+.navigation-buttons {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Sample data for demonstration
+let portfolioData = {
+    holdings: [
+        {
+            symbol: 'AAPL',
+            name: 'Apple Inc.',
+            shares: 50,
+            currentPrice: 175.25,
+            purchasePrice: 165.50,
+            value: 8762.50,
+            gain: 487.50,
+            gainPercent: 5.89
+        },
+        {
+            symbol: 'GOOGL',
+            name: 'Alphabet Inc.',
+            shares: 20,
+            currentPrice: 142.80,
+            purchasePrice: 138.20,
+            value: 2856.00,
+            gain: 92.00,
+            gainPercent: 3.33
+        },
+        {
+            symbol: 'MSFT',
+            name: 'Microsoft Corporation',
+            shares: 30,
+            currentPrice: 378.90,
+            purchasePrice: 355.75,
+            value: 11367.00,
+            gain: 694.50,
+            gainPercent: 6.51
+        },
+        {
+            symbol: 'TSLA',
+            name: 'Tesla Inc.',
+            shares: 15,
+            currentPrice: 248.50,
+            purchasePrice: 265.20,
+            value: 3727.50,
+            gain: -250.50,
+            gainPercent: -6.29
+        },
+        {
+            symbol: 'VTI',
+            name: 'Vanguard Total Stock Market ETF',
+            shares: 100,
+            currentPrice: 198.75,
+            purchasePrice: 192.30,
+            value: 19875.00,
+            gain: 645.00,
+            gainPercent: 3.35
+        },
+        {
+            symbol: 'BND',
+            name: 'Vanguard Total Bond Market ETF',
+            shares: 200,
+            currentPrice: 75.20,
+            purchasePrice: 74.80,
+            value: 15040.00,
+            gain: 80.00,
+            gainPercent: 0.53
+        }
+    ],
+    allocation: [
+        { name: 'Stocks', value: 65.2, color: '#FF6384' },
+        { name: 'Bonds', value: 20.1, color: '#36A2EB' },
+        { name: 'ETFs', value: 12.0, color: '#FFCE56' },
+        { name: 'Cash', value: 2.7, color: '#4BC0C0' }
+    ]
+};
+
+let portfolioChart;
+let allocationChart;
+
+function initializeCharts() {
+    // Portfolio performance chart
+    const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
+    portfolioChart = new Chart(portfolioCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Portfolio Value',
+                data: [118200, 120500, 116800, 122300, 119600, 125430],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + (value / 1000) + 'K';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Asset allocation chart
+    const allocationCtx = document.getElementById('allocationChart').getContext('2d');
+    allocationChart = new Chart(allocationCtx, {
+        type: 'doughnut',
+        data: {
+            labels: portfolioData.allocation.map(item => item.name),
+            datasets: [{
+                data: portfolioData.allocation.map(item => item.value),
+                backgroundColor: portfolioData.allocation.map(item => item.color),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function loadHoldings() {
+    const holdingsContainer = document.getElementById('holdingsList');
+    const totalValue = portfolioData.holdings.reduce((total, holding) => total + holding.value, 0);
+    const totalGain = portfolioData.holdings.reduce((total, holding) => total + holding.gain, 0);
+
+    holdingsContainer.innerHTML = portfolioData.holdings.map(holding => {
+        const weight = (holding.value / totalValue * 100).toFixed(1);
+        const changeClass = holding.gain >= 0 ? 'positive' : 'negative';
+        const changeSymbol = holding.gain >= 0 ? '+' : '';
+
+        return `
+            <div class="holding-item">
+                <div class="holding-header">
+                    <div>
+                        <div class="holding-symbol">${holding.symbol}</div>
+                        <div class="holding-name">${holding.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="holding-value">₹${holding.value.toLocaleString()}</div>
+                        <div class="holding-change ${changeClass}">
+                            ${changeSymbol}₹${holding.gain.toLocaleString()} (${changeSymbol}${holding.gainPercent.toFixed(2)}%)
+                        </div>
+                    </div>
+                </div>
+                <div class="holding-stats">
+                    <span>Shares: ${holding.shares}</span>
+                    <span>Price: ₹${holding.currentPrice.toFixed(2)}</span>
+                    <span>Weight: ${weight}%</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function loadPerformanceAnalysis() {
+    const analysisContainer = document.getElementById('performanceAnalysis');
+    
+    const totalValue = portfolioData.holdings.reduce((total, holding) => total + holding.value, 0);
+    const totalGain = portfolioData.holdings.reduce((total, holding) => total + holding.gain, 0);
+    const totalInvested = portfolioData.holdings.reduce((total, holding) => total + (holding.shares * holding.purchasePrice), 0);
+    const totalReturn = (totalGain / totalInvested) * 100;
+
+    analysisContainer.innerHTML = `
+        <div class="row">
+            <div class="col-md-3">
+                <div class="performance-metric">
+                    <div class="performance-value text-success">+₹${totalGain.toLocaleString()}</div>
+                    <div class="performance-label">Total Gain/Loss</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="performance-metric">
+                    <div class="performance-value text-success">+${totalReturn.toFixed(2)}%</div>
+                    <div class="performance-label">Total Return</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="performance-metric">
+                    <div class="performance-value">₹${totalValue.toLocaleString()}</div>
+                    <div class="performance-label">Portfolio Value</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="performance-metric">
+                    <div class="performance-value">${portfolioData.holdings.length}</div>
+                    <div class="performance-label">Holdings</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function loadMarketNews() {
+    const newsContainer = document.getElementById('marketNews');
+    
+    const news = [
+        {
+            title: 'Tech stocks rally as earnings beat expectations',
+            time: '2 hours ago'
+        },
+        {
+            title: 'Federal Reserve signals potential rate cuts',
+            time: '4 hours ago'
+        },
+        {
+            title: 'Energy sector shows strong performance',
+            time: '6 hours ago'
+        },
+        {
+            title: 'International markets show mixed results',
+            time: '8 hours ago'
+        }
+    ];
+
+    newsContainer.innerHTML = news.map(item => `
+        <div class="news-item">
+            <div class="news-title">${item.title}</div>
+            <div class="news-time">${item.time}</div>
+        </div>
+    `).join('');
+}
+
+function addInvestment() {
+    alert('Add investment functionality will be implemented soon!');
+}
+
+function rebalancePortfolio() {
+    alert('Portfolio rebalancing functionality will be implemented soon!');
+}
+
+function exportPortfolio() {
+    const portfolioExport = {
+        holdings: portfolioData.holdings,
+        totalValue: portfolioData.holdings.reduce((total, holding) => total + holding.value, 0),
+        totalGain: portfolioData.holdings.reduce((total, holding) => total + holding.gain, 0),
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(portfolioExport, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'investment_portfolio.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    alert('Portfolio exported successfully!');
+}
+
+function viewReports() {
+    alert('Detailed reports functionality will be implemented soon!');
+}
+
+// Initialize everything when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadHoldings();
+    loadPerformanceAnalysis();
+    loadMarketNews();
+});
+</script>
+{% endblock %}
